@@ -1,0 +1,123 @@
+Investigación 
+•	Buscar información técnica sobre el funcionamiento de los sistemas anti-cheat a nivel de kernel 
+Análisis del cliente: Un software escanea los procesos y la memoria del PC del jugador para detectar trampas conocidas.  
+Acceso a nivel de kernel: Un controlador con altos privilegios monitoriza las llamadas al sistema operativo para bloquear trampas antes de que se ejecuten.  
+Análisis en el servidor: Se utilizan algoritmos y modelos de Machine Learning para analizar datos de millones de partidas, identificando comportamientos anómalos que un humano no podría replicar. 
+ 
+Investigación 2 
+FUENTES:  
+Funcionamientos de los sistemas anti-cheat a nivel kernel 
+Los sistemas anticheat son en general un sistema de protección para videojuegas que operan al más alto nivel de privilegio disponible en el software. Operan de manera que interceptan el callbak del kernel que fueron disenado legitimamente para la seguridad de los productos. Van escaneando estructuras de memorias que no han sido ni si quiera tocadas por los programadores y lo va haciendo de forma transparente en segundo plano mientras se ejecuta el videojuego. 
+Dentro de estos sistemas hay varios modelos uno de ellos es el de tres componentes. 
+Modelo de tres componentes 
+Los sistemas antitrampas modernos que utilizan componentes de kernel suelen seguir una arquitectura de tres capas:  
+•	Controlador de kernel: Es la primera capa y se ejecuta en ring 0. Registra eventos y notificaciones del sistema mientras supervisa ciertas operaciones como analizar memorias y aplicar mecanismos de protección. Es la capa con mayor capacidad para detectar o bloquear acciones a bajo nivel.  
+ 
+•	Servicio en modo usuario: También conocida como segunda capa, se ejecuta como un servicio de Windows normalmente con privilegios elevados y a menudo bajo la cuenta SYSTEM. Este se comunica con el controlador mediante solicitudes de entrada y salida entre un programa y un controlador, llamado IOCTL. También gestiona la comunicación con los servidores del proveedor, la aplicación de sanciones y la recopilación de telemetría.  
+ 
+•	DLL cargada en el juego: Por último, la tercera capa se carga dentro del proceso del juego o se integra durante su inicio. Realiza las comprobaciones en modo usuario y se comunica con el servicio mientras aplica protecciones específicas sobre el proceso del juego. 
+Arquitectura de Vanguard 
+Riot games es la empresa propietaria de Vanguard y usa un anticheat de manera que carga un controlador durante el arranque del sistema, de esta manera le permite supervisar etapas tempranas de carga de controladores. 
+El sistema hace una lista interna con controladores permitidos y no permitidos. En la lista de permitos se aceptan controladores que permiten coexistir con el juego protegido, mientras tanto en la blacklist se reduce el riesgo d ecargar controladores vulnerables, no autorizados o asociados con herramientas capaz de alterar el funcionamiento del juego, es decir de hacer trampas. 
+ 
+Eventos y supervisión del kernel 
+El fundamento de un sistema anticheat a través del kernel es este. Windows ofrece mecanismos para que productos de seguridad registren notificaciones sobre eventos relevantes del sistema.  
+Dichos eventos pueden incluir, según el diseño del producto y las capacidades permitidas por Windows:  
+•	Creación o finalización de procesos.  
+•	Inicio y finalización de hilos.  
+•	Carga de módulos y bibliotecas.  
+•	Operaciones relacionadas con controladores.  
+•	Cambios en determinados recursos protegidos.  
+•	Actividad sospechosa alrededor del proceso del juego.  
+ 
+La finalidad es obtener visibilidad en tiempo real y, cuando corresponda, impedir o informar sobre operaciones que puedan comprometer la integridad del juego. 
+ 
+Protección y análisis de memoria 
+Un sistema anticheat puede verificar la memoria del proceso del juego y, en ciertos casos, buscar señales de software no autorizado en otras zonas de memoria del sistema. 
+ 
+Comprobación periódica de integridad 
+Los antitrampas pueden calcular valores hash de las secciones de código del ejecutable del juego y de sus DLL principales. 
+•	Al iniciar el juego, se genera una referencia de integridad. 
+•	Durante la ejecución, se vuelven a calcular hashes de forma periódica. 
+•	Los resultados se comparan con los valores esperados. 
+•	Si el hash cambia, puede indicar que una parte del código fue modificada en memoria. 
+ 
+Un cambio de este tipo puede ser una señal de manipulación del código del juego. Uno de los ejemplos que existen en ciertas trampas es que intentan modificar la lógica del juego para eliminar retroceso, alterar la velocidad o automatizar el apuntado de un arma. Sin embargo, una diferencia de hash no siempre prueba por sí sola una trampa: el sistema debe considerar actualizaciones, módulos autorizados y otros factores legítimos para verificarlo. 
+Detección de código cargado de forma anómala 
+Otra técnica consiste en revisar las regiones de memoria ejecutable dentro del proceso del juego y compararlas con la lista de módulos cargados legítimamente. 
+La idea general es la siguiente: 
+•	Se identifican regiones de memoria que contienen código ejecutable. 
+•	Se comprueba si cada región corresponde a un módulo, DLL o componente reconocido. 
+•	Una región ejecutable que no está vinculada a un módulo conocido puede considerarse sospechosa. 
+•	Esa señal se combina con otras comprobaciones antes de tomar una decisión, ya que algunos programas legítimos también pueden reservar memoria ejecutable. 
+ 
+Conclusión 
+Nuestro equipo ha llegado a la conclusión de que los sistemas antitrampas modernos basados en kernel usan una defensa por capas y además trabajan en distintos niveles del modelo de privilegios de Windows citados a continuación: 
+•	Eventos del kernel: proporcionan visibilidad sobre acciones importantes del sistema y, en algunos casos, permiten bloquear operaciones peligrosas.  
+•	Verificación de memoria: revisa la integridad del proceso del juego, detecta modificaciones de código y busca componentes inyectados o cargados de forma irregular.  
+•	Telemetría de comportamiento: analiza patrones de entrada, estadísticas de juego y otros indicadores para identificar conductas anómalas que podrían no ser visibles mediante un análisis técnico de memoria.  
+•	Identificación del equipo: puede ayudar a aplicar sanciones incluso cuando una persona crea o utiliza otra cuenta, se suelen usar MAC address, IPs o incluso los s/n de algunos componentes como la tarjeta gráfica. 
+•	Protecciones contra depuración y máquinas virtuales: buscan dificultar el análisis, la ingeniería inversa y el desarrollo de herramientas no autorizadas. 
+Por qué los anti-cheat de kernel no funcionan en Linux 
+Los drivers anticheats diseñados para Windows no son compatibles directamente con Linux, porque ambos sistemas operativos tienen arquitecturas, interfaces de controladores y modelos de seguridad diferentes.  
+Además, muchos videojuegos se desarrollan principalmente para Windows, por lo que algunos estudios priorizan invertir recursos en ese sistema antes que en Linux, que tiene una cuota de mercado de videojuegos más pequeña. Es una cuestión de eficiencia de coste-retorno. 
+Linux es un sistema de código abierto: cualquier persona puede estudiar su código fuente, compilar su propio kernel y utilizar una versión modificada del sistema. Esto no significa que Linux sea inherentemente inseguro, pero sí presenta un reto para los antitrampas que dependen de verificar que el sistema operativo, el kernel y los controladores no han sido modificados.  
+Por esta razón, en Linux los desarrolladores suelen necesitar enfoques específicos, como soporte nativo para Linux, compatibilidad con Proton, validaciones desde el servidor y sistemas de detección basados en comportamiento. Algunos juegos pueden funcionar con antitrampas en Linux, pero depende de que el desarrollador habilite y mantenga explícitamente esa compatibilidad. 
+CROWDSTRIKE 
+El sistema operativo Windows hace uso de los productos de Crowdstrike, una empresa externa dedicada a la ciberseguridad y con un amplio historial de clientes entre los que se encuentran empresas financieras, aeropuertos, hoteles, etc.. 
+Este sistema cuenta con un elemento que se llama Falcon Sensor que es el encargado de comprobar en tiempo real amenazas de software y ciberataques. 
+Falcon sensor se implemento en el hosting de windows en las versiones 7.11 en adelante que fueron los sistemas afectados según la comunicacion oficial de crowdstrike. 
+El día 19 de Julio de 2024 crowdstrike lanzó una actualización de este sensor que provocaba un buffer overflow en estos sistemas dando lugar al famoso pantallazo azul. 
+Todos los ordenadores que estaban conectados en ese momento se crashearon creando un problema crítico de infraestructura a nivel global.  
+Los impactos de la interrupción: 
+Sector financiero 
+•	Las bolsas de valores mundiales mostraron una tendencia a la baja. 
+•	Los servicios de banca en línea se vieron interrumpidos. 
+•	Los pagos con tarjeta también se vieron afectados en algunos restaurantes. 
+•	Varias plataformas de negociación, como E*Trade, Schwab y Merrill Edge en Estados Unidos, tuvieron problemas. 
+•	Los bancos reaccionaron rápidamente e informaron a sus clientes sobre las disrupciones. 
+Sector de la salud 
+•	Los sistemas 911 de varios países, incluidas regiones remotas, se vieron afectados. 
+•	Múltiples redes de salud, como las de Toronto y Columbia Británica en Canadá, sufrieron interrupciones. 
+•	Varios hospitales tuvieron que recurrir a procesos en papel durante la interrupción. 
+•	El acceso a los expedientes de pacientes fue difícil o imposible. También se registraron problemas para programar citas. 
+•	Algunas salas de emergencia fueron cerradas y varias cirugías se pospusieron. 
+ 
+ 
+Sector del transporte 
+•	Más de 1.100 vuelos fueron cancelados y más de 2.000 retrasados solo en Estados Unidos. 
+•	En EE. UU., las aerolíneas United, Delta y American Airlines emitieron un global ground stop para todos sus vuelos. 
+•	La empresa estadounidense Porter también canceló numerosos vuelos, afectando a miles de pasajeros hasta las 3:00 p. m. del mismo día. 
+•	Se experimentaron demoras más largas de lo habitual en las aduanas, especialmente en la frontera Canadá–Estados Unidos, con esperas de más de hora y media. 
+Sector manufacturero 
+•	Grandes corporaciones como FedEx, UPS y Amazon informaron importantes disrupciones en sus operaciones. 
+•	Los empleados de los almacenes de Amazon tuvieron dificultades para gestionar sus horarios. 
+Sector de telecomunicaciones 
+•	Los servicios de telecomunicaciones e información se vieron afectados a nivel global. 
+•	En Canadá, los sistemas nacionales de radio, como Radio-Canada, sufrieron interrupciones que impidieron la emisión de ciertos programas. 
+ 
+ Solución 
+Al ser un error interno trabajaron junto a Microsoft para lanzar correcciones y parches para restaurar los sistemas afectados. 
+En cuestión de horas se publicaron manuales para que los usuarios pudieran resolver manualmente el incidente.  
+El 24 de julio el 97% de los dispositivos afectados se habían recuperado.  
+Para gestionar la crisis, CrowdStrike publicó lo siguiente: 
+•	Una declaración sobre la interrupción, incluida una carta del CEO de CrowdStrike 
+•	Los detalles técnicos de la interrupción del 19 de julio de 2024 
+•	Una declaración de Shawn Henry, Director de Seguridad (Chief Security Officer) de CrowdStrike 
+•	Un informe preliminar de incidente (PIR) y su resumen ejecutivo. 
+Requirió intervención manual en cada máquina para arrancar en modo seguro y eliminar o sustituir el archivo defectuoso (C-00000291*.sys), o múltiples reinicios asistidos por los departamentos de TI. 
+Crowstrike de manera oficial publicó tambien varias soluciones para prevenir que este tipo de fallos volviesen a ocurrir: 
+Mejora de los procedimientos de test de software, mejorando el testing de la Rapid Response Content usando nuevos checks de validación en el validador de contenidos. 
+Mejora de la resiliencia y recuperabilidad, de tal manera que se introdujeron mecanismos para manejar de forma eficiente los fallos en el falcon sensor. 
+Estrategia depurada de despliegue, involucrando una mejora de la estrategia y monitorizando de manera mejorada el sistema del sensor. 
+Valdicación de terceros actores. 
+ 
+Referencias bibliográficas y fuentes: 
+https://s4dbrd.github.io/posts/how-kernel-anti-cheats-work/#1-introduction 
+https://en.wikipedia.org/wiki/Kernel-level_anti-cheat 
+https://es.news.hada.io/topic?id=27539 
+https://esgeeks.com/como-funcionan-sistemas-antitrampas/ 
+https://www.premiercontinuum.com/es/resources/interrupcion-microsoft-julio-2024 
+https://www.bbc.com/mundo/articles/c724wnkq5veo 
+https://www.crowdstrike.com/wp-content/uploads/2024/07/CrowdStrike-PIR-Executive-Summary.pdf  
+
