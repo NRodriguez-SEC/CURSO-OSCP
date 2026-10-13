@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte OSINT - {{ reporte.target }}</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #2980b9; margin-top: 30px; }
+        .badge { display: inline-block; padding: 5px 10px; border-radius: 4px; color: white; font-weight: bold; }
+        .badge-domain { background-color: #3498db; }
+        .badge-email { background-color: #e67e22; }
+        .badge-username { background-color: #9b59b6; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+        ul { list-style-type: none; padding: 0; }
+        li { background: #f9f9f9; margin: 5px 0; padding: 10px; border-left: 4px solid #3498db; }
+        .footer { text-align: center; margin-top: 40px; font-size: 0.8em; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reporte OSINT: {{ reporte.target }}</h1>
+        <p><strong>Tipo de objetivo:</strong> <span class="badge badge-{{ reporte.type }}">{{ reporte.type|upper }}</span></p>
+        <p><strong>Fecha del análisis:</strong> {{ reporte.fecha }}</p>
+
+        <!-- SECCIÓN WEB (DOMINIOS) -->
+        {% if reporte.type == "domain" %}
+            <h2>🔍 Análisis Pasivo</h2>
+            {% if reporte.data.pasivo %}
+                <h3>WHOIS</h3>
+                <table>
+                    <tr><th>Registrador</th><td>{{ reporte.data.pasivo.whois.registrador|default('N/A') }}</td></tr>
+                    <tr><th>Creación</th><td>{{ reporte.data.pasivo.whois.fecha_creacion|default('N/A') }}</td></tr>
+                    <tr><th>Expiración</th><td>{{ reporte.data.pasivo.whois.fecha_expiracion|default('N/A') }}</td></tr>
+                </table>
+                <h3>DNS</h3>
+                <ul>
+                    {% for tipo, registros in reporte.data.pasivo.dns.items() %}
+                        {% if registros %}
+                            <li><strong>{{ tipo }}:</strong> {{ registros|join(', ') }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+<h2>📧 theHarvester - Emails y Subdominios</h2>
+{% if reporte.data.theharvester %}
+    <h3>Emails Encontrados ({{ reporte.data.theharvester.emails|length }})</h3>
+    {% if reporte.data.theharvester.emails %}
+        <ul>
+            {% for email in reporte.data.theharvester.emails %}
+            <li>{{ email }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No se encontraron emails.</p>
+    {% endif %}
+
+    <h3>Subdominios Encontrados ({{ reporte.data.theharvester.subdominios|length }})</h3>
+    {% if reporte.data.theharvester.subdominios %}
+        <ul>
+            {% for sub in reporte.data.theharvester.subdominios %}
+            <li>{{ sub }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No se encontraron subdominios.</p>
+    {% endif %}
+{% else %}
+    <p>theHarvester no fue ejecutado.</p>
+{% endif %}
+            <h2>⚡ Análisis Activo</h2>
+            {% if reporte.data.activo %}
+                <h3>Puertos Abiertos (Nmap)</h3>
+                <table>
+                    <tr><th>Puerto</th><th>Protocolo</th><th>Servicio</th><th>Versión</th></tr>
+                    {% for p in reporte.data.activo.nmap.puertos_abiertos %}
+                    <tr>
+                        <td>{{ p.puerto }}</td>
+                        <td>{{ p.protocolo }}</td>
+                        <td>{{ p.servicio }}</td>
+                        <td>{{ p.version }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                <h3>Directorios Encontrados</h3>
+                <ul>
+                    {% for d in reporte.data.activo.directorios.directorios_encontrados %}
+                    <li><strong>{{ d.path }}</strong> (Status: {{ d.status_code }})</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No se realizó análisis activo.</p>
+            {% endif %}
+        {% endif %}
+
+        <!-- SECCIÓN PERSONAS (EMAIL/USERNAME) -->
+        {% if reporte.type == "email" %}
+            <h2>🔓 Brechas de Datos</h2>
+            {% if reporte.data.brechas_hibp.brechas %}
+                <ul>
+                    {% for b in reporte.data.brechas_hibp.brechas %}
+                    <li><strong>{{ b.nombre }}</strong> ({{ b.fecha }}) - Datos filtrados: {{ b.datos_filtrados|default(b.datos)|join(', ') }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No se encontraron brechas para este email.</p>
+            {% endif %}
+        {% endif %}
+<h2>🔓 Brechas de Datos (XposedOrNot)</h2>
+{% if reporte.data.brechas_xposedornot %}
+    {% if reporte.data.brechas_xposedornot.error %}
+        <p style="color: #e74c3c;"><strong>⚠️ Error:</strong> {{ reporte.data.brechas_xposedornot.error }}</p>
+    {% elif reporte.data.brechas_xposedornot.brechas %}
+        <ul>
+            {% for b in reporte.data.brechas_xposedornot.brechas %}
+            <li>
+                <strong>{{ b.nombre }}</strong>
+                {% if b.fecha != "N/A" %} ({{ b.fecha }}){% endif %}
+                {% if b.datos_filtrados %} - Datos: {{ b.datos_filtrados|join(', ') }}{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No se encontraron brechas en XposedOrNot.</p>
+    {% endif %}
+{% else %}
+    <p>XposedOrNot no fue ejecutado.</p>
+{% endif %}
+
+        {% if reporte.type == "username" %}
+            <h2>🌐 Perfiles en Redes Sociales</h2>
+            {% if reporte.data.social.perfiles %}
+                <table>
+                    <tr><th>Red Social</th><th>URL</th></tr>
+                    {% for p in reporte.data.social.perfiles %}
+                    <tr>
+                        <td>{{ p.red }}</td>
+                        <td><a href="{{ p.url }}" target="_blank">{{ p.url }}</a></td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% else %}
+                <p>No se encontraron perfiles públicos.</p>
+            {% endif %}
+        {% endif %}
+
+        <div class="footer">
+            Generado por OSINT Orchestrator - Herramienta educativa
+        </div>
+    </div>
+</body>
+</html>
