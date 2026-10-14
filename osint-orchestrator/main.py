@@ -105,7 +105,8 @@ def main():
     elif target_type in ["email", "username", "phone"]:
         print(f"{Fore.GREEN}[+] Cargando módulos de HUELLA DIGITAL (Personas)...")
         
-        from modules.person import breaches, social, xposedornot
+        # Importamos TODOS los módulos arriba (incluido holehe)
+        from modules.person import breaches, social, xposedornot, holehe
         
         if target_type == "email":
             # Brechas con HIBP (modo simulado si no hay API Key)
@@ -115,23 +116,38 @@ def main():
             # Brechas con XposedOrNot (API gratuita sin key)
             resultados_xon = xposedornot.run(target)
             reporte_final["data"]["brechas_xposedornot"] = resultados_xon
+            
+            # Holehe: comprobar en qué sitios está registrado el email
+            resultados_holehe = holehe.run(target)
+            reporte_final["data"]["holehe"] = resultados_holehe
+            
         elif target_type == "username":
             # Redes sociales para usernames
             resultados_social = social.run(target)
             reporte_final["data"]["social"] = resultados_social
+            
         else:
-            print(f"{Fore.YELLOW}    - Módulo para teléfono aún no implementado.")
-    
+            print(f"{Fore.YELLOW}    - Módulo para teléfono aún no implementado.")    
     # --- GENERACIÓN DE REPORTES ---
     import datetime
     reporte_final["fecha"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    from report import generator
+    from report import generator, graph
     
     if args.output in ["json", "all"]:
         generator.generate_json(reporte_final)
     if args.output in ["html", "all"]:
         generator.generate_html(reporte_final)
+    
+    # --- GRAFO DE RELACIONES ---
+    try:
+        ruta_grafo = graph.generate_graph(reporte_final)
+        reporte_final["grafo"] = ruta_grafo
+        # Regeneramos el HTML con el grafo embebido
+        if args.output in ["html", "all"]:
+            generator.generate_html(reporte_final)
+    except Exception as e:
+        print(f"{Fore.RED}[!] No se pudo generar el grafo: {e}")
     
     print(f"\n{Fore.GREEN}[+] ¡Orquestación completada con éxito!")
 

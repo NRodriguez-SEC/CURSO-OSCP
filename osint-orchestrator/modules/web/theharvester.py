@@ -19,52 +19,66 @@ def parse_stdout(output):
 def run(target, sources="crtsh,certspotter,commoncrawl", limit=500):
     """
     Ejecuta theHarvester sobre un dominio y devuelve los resultados.
-    
-    Args:
-        target: Dominio a analizar (ej: example.com)
-        sources: Fuentes a consultar (por defecto: crtsh,certspotter,commoncrawl)
-        limit: Límite de resultados por fuente
-    
-    Returns:
-        Diccionario con emails, subdominios e IPs encontradas.
     """
     print(f"{Fore.YELLOW}[+] Ejecutando theHarvester sobre: {target}")
     
-    # Limpiamos el nombre del archivo de salida
+    # Rutas absolutas
+    home = os.path.expanduser("~")
+    uv_bin = os.path.join(home, ".local", "bin", "uv")
+    harvester_dir = os.path.join(home, "theHarvester")
+    
+    # Verificamos que existen
+    if not os.path.exists(uv_bin):
+        return {"error": f"uv no encontrado en {uv_bin}"}
+    if not os.path.exists(harvester_dir):
+        return {"error": f"theHarvester no encontrado en {harvester_dir}"}
+    
+    # Creamos la carpeta output si no existe
+    if not os.path.exists("output"):
+        os.makedirs("output")
+    
     output_base = f"output/harvester_{target.replace('.', '_').replace('/', '_')}"
+    # Necesitamos la ruta absoluta porque el subprocess se ejecuta en harvester_dir
+    output_base_abs = os.path.abspath(output_base)
     
     cmd = [
-        "theHarvester",
+        uv_bin, "run", "theHarvester",
         "-d", target,
         "-b", sources,
         "-l", str(limit),
-        "-f", output_base
+        "-f", output_base_abs
     ]
     
+    print(f"{Fore.CYAN}    Comando: {' '.join(cmd)}")
+    
     try:
-        # Ejecutamos theHarvester con timeout de 5 minutos
+        # Limpiamos el VIRTUAL_ENV del OSINT para que uv no se confunda
+        env_limpio = os.environ.copy()
+        env_limpio.pop("VIRTUAL_ENV", None)
+        
         result = subprocess.run(
             cmd,
+            cwd=harvester_dir,
             capture_output=True,
             text=True,
-            timeout=300
+            timeout=300,
+            env=env_limpio
         )
         
-        # Intentamos leer el JSON generado por theHarvester
-        json_file = f"{output_base}.json"
+        print(f"{Fore.CYAN}    Return code: {result.returncode}")
+        if result.stderr:
+            print(f"{Fore.RED}    --- stderr ---")
+            print(result.stderr[:1000])
+        
+        # Intentamos leer el JSON generado
+        json_file = f"{output_base_abs}.json"
         if os.path.exists(json_file):
             with open(json_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
-            # Normalizamos los resultados (theHarvester puede devolver listas vacías)
-            emails = data.get("emails", [])
-            hosts = data.get("hosts", [])
-            ips = data.get("ips", [])
-            
-            # Limpiamos y deduplicamos
-            emails = sorted(set(e for e in emails if isinstance(e, str)))
-            hosts = sorted(set(h for h in hosts if isinstance(h, str)))
-            ips = sorted(set(ips))
+            emails = sorted(set(e for e in data.get("emails", []) if isinstance(e, str)))
+            hosts = sorted(set(h for h in data.get("hosts", []) if isinstance(h, str)))
+            ips = sorted(set(data.get("ips", [])))
             
             print(f"{Fore.GREEN}    - Emails encontrados: {len(emails)}")
             print(f"{Fore.GREEN}    - Subdominios encontrados: {len(hosts)}")
@@ -77,22 +91,25 @@ def run(target, sources="crtsh,certspotter,commoncrawl", limit=500):
                 "ips": ips,
                 "fuentes_usadas": sources
             }
-        else:
-            # Fallback: parsear stdout si no se generó el JSON
-            print(f"{Fore.YELLOW}    - JSON no encontrado, parseando salida de texto...")
-            parsed = parse_stdout(result.stdout)
-            return {
-                "target": target,
-                "emails": parsed["emails"],
-                "subdominios": parsed["hosts"],
-                "ips": parsed["ips"],
-                "fuentes_usadas": sources,
-                "nota": "Resultados parseados desde stdout"
-            }
-            
+        
+        # Fallback: parsear stdout
+        print(f"{Fore.YELLOW}    - JSON no encontrado, parseando stdout...")
+        parsed = parse_stdout(result.stdout or "")
+        
+        print(f"{Fore.GREEN}    - Emails: {len(parsed['emails'])}")
+        print(f"{Fore.GREEN}    - Subdominios: {len(parsed['hosts'])}")
+        print(f"{Fore.GREEN}    - IPs: {len(parsed['ips'])}")
+        
+        return {
+            "target": target,
+            "emails": parsed["emails"],
+            "subdominios": parsed["hosts"],
+            "ips": parsed["ips"],
+            "fuentes_usadas": sources,
+            "nota": "Parseado desde stdout"
+        }
+        
     except subprocess.TimeoutExpired:
         return {"error": "theHarvester tardó demasiado (timeout de 5 min)"}
-    except FileNotFoundError:
-        return {"error": "theHarvester no está instalado. Ejecuta: pip install theHarvester"}
     except Exception as e:
         return {"error": str(e)}

@@ -130,6 +130,24 @@
     <p>XposedOrNot no fue ejecutado.</p>
 {% endif %}
 
+            <h2>🌐 Cuentas Registradas (Holehe)</h2>
+            {% if reporte.data.holehe %}
+                {% if reporte.data.holehe.error %}
+                    <p style="color: #e74c3c;"><strong>⚠️ Error:</strong> {{ reporte.data.holehe.error }}</p>
+                {% elif reporte.data.holehe.sitios %}
+                    <p>Total: <strong>{{ reporte.data.holehe.sitios|length }}</strong> sitios donde el email está registrado.</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+                        {% for sitio in reporte.data.holehe.sitios %}
+                        <span style="background-color: #3498db; color: white; padding: 4px 10px; border-radius: 15px; font-size: 0.85em;">{{ sitio.sitio }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No se encontraron registros en Holehe.</p>
+                {% endif %}
+            {% else %}
+                <p>Holehe no fue ejecutado.</p>
+            {% endif %}
+
         {% if reporte.type == "username" %}
             <h2>🌐 Perfiles en Redes Sociales</h2>
             {% if reporte.data.social.perfiles %}
