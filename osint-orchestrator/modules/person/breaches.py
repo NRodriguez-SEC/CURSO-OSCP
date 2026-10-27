@@ -1,13 +1,15 @@
+import os
 import requests
 from colorama import Fore
 
-# Si tienes API Key, ponla aquí. Si no, déjalo vacío para usar el modo simulado.
-HIBP_API_KEY = ""
+# La API key se lee del entorno (export HIBP_API_KEY=...). Si no existe, se usa el modo simulado.
+HIBP_API_KEY = os.getenv("HIBP_API_KEY", "")
+
 
 def run(email):
     """Busca el email en HaveIBeenPwned."""
     print(f"{Fore.YELLOW}[+] Buscando brechas para: {email}")
-    
+
     if not HIBP_API_KEY:
         # Modo simulado para pruebas sin API Key
         print(f"{Fore.YELLOW}    - Usando modo simulado (sin API Key)")
@@ -19,7 +21,7 @@ def run(email):
             ],
             "modo": "simulado"
         }
-    
+
     # Modo real con API
     url = f"https://haveibeenpwned.com/api/v3/breachedaccount/{email}"
     headers = {

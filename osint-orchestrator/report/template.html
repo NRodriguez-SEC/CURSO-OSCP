@@ -12,11 +12,14 @@
         .badge-domain { background-color: #3498db; }
         .badge-email { background-color: #e67e22; }
         .badge-username { background-color: #9b59b6; }
+        .badge-phone { background-color: #16a085; }
+        .btn-grafo { display: inline-block; margin-top: 10px; padding: 8px 14px; background: #2c3e50; color: white; border-radius: 4px; text-decoration: none; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }
         th { background-color: #f2f2f2; }
         ul { list-style-type: none; padding: 0; }
         li { background: #f9f9f9; margin: 5px 0; padding: 10px; border-left: 4px solid #3498db; }
+        .error { color: #e74c3c; }
         .footer { text-align: center; margin-top: 40px; font-size: 0.8em; color: #7f8c8d; }
     </style>
 </head>
@@ -25,6 +28,9 @@
         <h1>Reporte OSINT: {{ reporte.target }}</h1>
         <p><strong>Tipo de objetivo:</strong> <span class="badge badge-{{ reporte.type }}">{{ reporte.type|upper }}</span></p>
         <p><strong>Fecha del análisis:</strong> {{ reporte.fecha }}</p>
+        {% if reporte.grafo %}
+            <a class="btn-grafo" href="{{ reporte.grafo.split('/')[-1] }}" target="_blank">🕸️ Abrir grafo interactivo</a>
+        {% endif %}
 
         <!-- SECCIÓN WEB (DOMINIOS) -->
         {% if reporte.type == "domain" %}
@@ -45,46 +51,56 @@
                     {% endfor %}
                 </ul>
             {% endif %}
-<h2>📧 theHarvester - Emails y Subdominios</h2>
-{% if reporte.data.theharvester %}
-    <h3>Emails Encontrados ({{ reporte.data.theharvester.emails|length }})</h3>
-    {% if reporte.data.theharvester.emails %}
-        <ul>
-            {% for email in reporte.data.theharvester.emails %}
-            <li>{{ email }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No se encontraron emails.</p>
-    {% endif %}
 
-    <h3>Subdominios Encontrados ({{ reporte.data.theharvester.subdominios|length }})</h3>
-    {% if reporte.data.theharvester.subdominios %}
-        <ul>
-            {% for sub in reporte.data.theharvester.subdominios %}
-            <li>{{ sub }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No se encontraron subdominios.</p>
-    {% endif %}
-{% else %}
-    <p>theHarvester no fue ejecutado.</p>
-{% endif %}
+            <h2>📧 theHarvester - Emails y Subdominios</h2>
+            {% if reporte.data.theharvester %}
+                {% if reporte.data.theharvester.error %}
+                    <p class="error"><strong>⚠️ Error:</strong> {{ reporte.data.theharvester.error }}</p>
+                {% else %}
+                    <h3>Emails Encontrados ({{ reporte.data.theharvester.emails|length }})</h3>
+                    {% if reporte.data.theharvester.emails %}
+                        <ul>
+                            {% for email in reporte.data.theharvester.emails %}
+                            <li>{{ email }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No se encontraron emails.</p>
+                    {% endif %}
+
+                    <h3>Subdominios Encontrados ({{ reporte.data.theharvester.subdominios|length }})</h3>
+                    {% if reporte.data.theharvester.subdominios %}
+                        <ul>
+                            {% for sub in reporte.data.theharvester.subdominios %}
+                            <li>{{ sub }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No se encontraron subdominios.</p>
+                    {% endif %}
+                {% endif %}
+            {% else %}
+                <p>theHarvester no fue ejecutado.</p>
+            {% endif %}
+
             <h2>⚡ Análisis Activo</h2>
             {% if reporte.data.activo %}
                 <h3>Puertos Abiertos (Nmap)</h3>
-                <table>
-                    <tr><th>Puerto</th><th>Protocolo</th><th>Servicio</th><th>Versión</th></tr>
-                    {% for p in reporte.data.activo.nmap.puertos_abiertos %}
-                    <tr>
-                        <td>{{ p.puerto }}</td>
-                        <td>{{ p.protocolo }}</td>
-                        <td>{{ p.servicio }}</td>
-                        <td>{{ p.version }}</td>
-                    </tr>
-                    {% endfor %}
-                </table>
+                {% if reporte.data.activo.nmap.error %}
+                    <p class="error"><strong>⚠️ Error:</strong> {{ reporte.data.activo.nmap.error }}</p>
+                {% else %}
+                    <table>
+                        <tr><th>Puerto</th><th>Protocolo</th><th>Servicio</th><th>Versión</th></tr>
+                        {% for p in reporte.data.activo.nmap.puertos_abiertos %}
+                        <tr>
+                            <td>{{ p.puerto }}</td>
+                            <td>{{ p.protocolo }}</td>
+                            <td>{{ p.servicio }}</td>
+                            <td>{{ p.version }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                {% endif %}
                 <h3>Directorios Encontrados</h3>
                 <ul>
                     {% for d in reporte.data.activo.directorios.directorios_encontrados %}
@@ -96,44 +112,47 @@
             {% endif %}
         {% endif %}
 
-        <!-- SECCIÓN PERSONAS (EMAIL/USERNAME) -->
+        <!-- SECCIÓN EMAIL -->
         {% if reporte.type == "email" %}
-            <h2>🔓 Brechas de Datos</h2>
+            <h2>🔓 Brechas de Datos (HIBP)</h2>
+            {% if reporte.data.brechas_hibp.modo == "simulado" %}
+                <p><em>Modo simulado: define la variable de entorno HIBP_API_KEY para datos reales.</em></p>
+            {% endif %}
             {% if reporte.data.brechas_hibp.brechas %}
                 <ul>
                     {% for b in reporte.data.brechas_hibp.brechas %}
-                    <li><strong>{{ b.nombre }}</strong> ({{ b.fecha }}) - Datos filtrados: {{ b.datos_filtrados|default(b.datos)|join(', ') }}</li>
+                    <li><strong>{{ b.nombre }}</strong> ({{ b.fecha }}) - Datos filtrados: {{ (b.datos_filtrados or b.datos or [])|join(', ') }}</li>
                     {% endfor %}
                 </ul>
             {% else %}
                 <p>No se encontraron brechas para este email.</p>
             {% endif %}
-        {% endif %}
-<h2>🔓 Brechas de Datos (XposedOrNot)</h2>
-{% if reporte.data.brechas_xposedornot %}
-    {% if reporte.data.brechas_xposedornot.error %}
-        <p style="color: #e74c3c;"><strong>⚠️ Error:</strong> {{ reporte.data.brechas_xposedornot.error }}</p>
-    {% elif reporte.data.brechas_xposedornot.brechas %}
-        <ul>
-            {% for b in reporte.data.brechas_xposedornot.brechas %}
-            <li>
-                <strong>{{ b.nombre }}</strong>
-                {% if b.fecha != "N/A" %} ({{ b.fecha }}){% endif %}
-                {% if b.datos_filtrados %} - Datos: {{ b.datos_filtrados|join(', ') }}{% endif %}
-            </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No se encontraron brechas en XposedOrNot.</p>
-    {% endif %}
-{% else %}
-    <p>XposedOrNot no fue ejecutado.</p>
-{% endif %}
+
+            <h2>🔓 Brechas de Datos (XposedOrNot)</h2>
+            {% if reporte.data.brechas_xposedornot %}
+                {% if reporte.data.brechas_xposedornot.error %}
+                    <p class="error"><strong>⚠️ Error:</strong> {{ reporte.data.brechas_xposedornot.error }}</p>
+                {% elif reporte.data.brechas_xposedornot.brechas %}
+                    <ul>
+                        {% for b in reporte.data.brechas_xposedornot.brechas %}
+                        <li>
+                            <strong>{{ b.nombre }}</strong>
+                            {% if b.fecha != "N/A" %} ({{ b.fecha }}){% endif %}
+                            {% if b.datos_filtrados %} - Datos: {{ b.datos_filtrados|join(', ') }}{% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No se encontraron brechas en XposedOrNot.</p>
+                {% endif %}
+            {% else %}
+                <p>XposedOrNot no fue ejecutado.</p>
+            {% endif %}
 
             <h2>🌐 Cuentas Registradas (Holehe)</h2>
             {% if reporte.data.holehe %}
                 {% if reporte.data.holehe.error %}
-                    <p style="color: #e74c3c;"><strong>⚠️ Error:</strong> {{ reporte.data.holehe.error }}</p>
+                    <p class="error"><strong>⚠️ Error:</strong> {{ reporte.data.holehe.error }}</p>
                 {% elif reporte.data.holehe.sitios %}
                     <p>Total: <strong>{{ reporte.data.holehe.sitios|length }}</strong> sitios donde el email está registrado.</p>
                     <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
@@ -147,10 +166,14 @@
             {% else %}
                 <p>Holehe no fue ejecutado.</p>
             {% endif %}
+        {% endif %}
 
+        <!-- SECCIÓN USERNAME -->
         {% if reporte.type == "username" %}
-            <h2>🌐 Perfiles en Redes Sociales</h2>
-            {% if reporte.data.social.perfiles %}
+            <h2>🌐 Perfiles en Redes Sociales (Sherlock)</h2>
+            {% if reporte.data.social.error %}
+                <p class="error"><strong>⚠️ Error:</strong> {{ reporte.data.social.error }}</p>
+            {% elif reporte.data.social.perfiles %}
                 <table>
                     <tr><th>Red Social</th><th>URL</th></tr>
                     {% for p in reporte.data.social.perfiles %}
@@ -162,6 +185,54 @@
                 </table>
             {% else %}
                 <p>No se encontraron perfiles públicos.</p>
+            {% endif %}
+
+            <h2>🔎 Perfiles confirmados (Maigret)</h2>
+            {% if reporte.data.maigret %}
+                {% if reporte.data.maigret.error %}
+                    <p class="error"><strong>⚠️ Error:</strong> {{ reporte.data.maigret.error }}</p>
+                {% elif reporte.data.maigret.perfiles %}
+                    <table>
+                        <tr><th>Sitio</th><th>URL</th><th>Datos extraídos</th></tr>
+                        {% for p in reporte.data.maigret.perfiles %}
+                        <tr>
+                            <td>{{ p.red }}</td>
+                            <td><a href="{{ p.url }}" target="_blank">{{ p.url }}</a></td>
+                            <td>
+                                {% for k, v in (p.extra or {}).items() %}
+                                    {% if not k.startswith('_') %}<small><strong>{{ k }}:</strong> {{ v }}</small><br>{% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                {% else %}
+                    <p>Maigret no confirmó perfiles.</p>
+                {% endif %}
+            {% else %}
+                <p>Maigret no fue ejecutado.</p>
+            {% endif %}
+        {% endif %}
+
+        <!-- SECCIÓN TELÉFONO -->
+        {% if reporte.type == "phone" %}
+            <h2>📱 Análisis de Teléfono</h2>
+            {% if reporte.data.telefono %}
+                {% if reporte.data.telefono.error %}
+                    <p class="error"><strong>⚠️ Error:</strong> {{ reporte.data.telefono.error }}</p>
+                {% else %}
+                    <table>
+                        <tr><th>Número (E164)</th><td>{{ reporte.data.telefono.e164 }}</td></tr>
+                        <tr><th>Internacional</th><td>{{ reporte.data.telefono.internacional }}</td></tr>
+                        <tr><th>Válido</th><td>{{ "Sí" if reporte.data.telefono.valido else "No" }}</td></tr>
+                        <tr><th>País</th><td>{{ reporte.data.telefono.pais }} (+{{ reporte.data.telefono.codigo_pais }})</td></tr>
+                        <tr><th>Operador</th><td>{{ reporte.data.telefono.operador }}</td></tr>
+                        <tr><th>Tipo de línea</th><td>{{ reporte.data.telefono.tipo_linea }}</td></tr>
+                        <tr><th>Zonas horarias</th><td>{{ reporte.data.telefono.zonas_horarias|join(', ') }}</td></tr>
+                    </table>
+                {% endif %}
+            {% else %}
+                <p>No se analizó ningún teléfono.</p>
             {% endif %}
         {% endif %}
 

@@ -4,4 +4,7 @@ python-whois
 beautifulsoup4
 jinja2
 colorama
-
+pyvis
+phonenumbers
+rich
+holehe

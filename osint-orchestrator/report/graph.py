@@ -1,171 +1,331 @@
 import os
-from graphviz import Digraph
+import re
+from datetime import datetime
+from pyvis.network import Network
 from colorama import Fore
 
-# Colores por tipo de nodo (estilo pastel profesional)
+# Estilo por tipo de nodo (vis.js)
 COLORES = {
-    "target":       {"fill": "#2c3e50", "font": "white", "shape": "doubleoctagon"},
-    "dominio":      {"fill": "#3498db", "font": "white", "shape": "box"},
-    "subdominio":   {"fill": "#85c1e9", "font": "black", "shape": "box"},
-    "email":        {"fill": "#e67e22", "font": "white", "shape": "ellipse"},
-    "brecha":       {"fill": "#e74c3c", "font": "white", "shape": "note"},
-    "username":     {"fill": "#9b59b6", "font": "white", "shape": "ellipse"},
-    "perfil":       {"fill": "#bb8fce", "font": "black", "shape": "box"},
-    "puerto":       {"fill": "#16a085", "font": "white", "shape": "hexagon"},
-    "dns":          {"fill": "#f39c12", "font": "white", "shape": "parallelogram"},
+    "target":     {"color": "#2c3e50", "shape": "star",     "size": 30},
+    "dominio":    {"color": "#3498db", "shape": "box",      "size": 20},
+    "subdominio": {"color": "#85c1e9", "shape": "box",      "size": 14},
+    "email":      {"color": "#e67e22", "shape": "dot",      "size": 18},
+    "brecha":     {"color": "#e74c3c", "shape": "triangle", "size": 16},
+    "username":   {"color": "#9b59b6", "shape": "dot",      "size": 18},
+    "perfil":     {"color": "#bb8fce", "shape": "box",      "size": 14},
+    "puerto":     {"color": "#16a085", "shape": "hexagon",  "size": 16},
+    "dns":        {"color": "#f39c12", "shape": "diamond",  "size": 16},
 }
 
 
-def _nodo(dot, id_nodo, label, tipo="dominio"):
-    """Añade un nodo con estilo según su tipo."""
+def _nodo(net, id_nodo, label, tipo="dominio", title=None, url=None):
+    """Añade un nodo. 'url' = a dónde navegar al hacer clic."""
     estilo = COLORES.get(tipo, COLORES["dominio"])
-    dot.node(
+    tooltip = title or label
+    if url:
+        tooltip = f"{tooltip}\n🔗 {url}"
+    net.add_node(
         id_nodo,
         label=label,
-        style="filled,rounded",
-        fillcolor=estilo["fill"],
-        fontcolor=estilo["font"],
+        color=estilo["color"],
         shape=estilo["shape"],
-        fontname="Helvetica"
+        size=estilo["size"],
+        title=tooltip,
+        url=url or "",
+        font={"color": "#2c3e50", "size": 14},
     )
 
 
-def generate_graph(reporte, filename="output/grafo"):
-    """
-    Genera un grafo de relaciones a partir del reporte.
-    Devuelve la ruta del archivo PNG generado.
-    """
+def _nueva_red(height="750px"):
+    net = Network(
+        height=height, width="100%",
+        bgcolor="#f4f6f9", font_color="#2c3e50",
+        directed=True, cdn_resources="in_line",  # HTML autónomo, funciona offline
+    )
+    return net
+
+
+def _nombre_unico(prefijo, target):
+    target_limpio = re.sub(r'[^a-zA-Z0-9.-]', '_', str(target))
+    fecha = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"output/{prefijo}_{target_limpio}_{fecha}.html"
+
+
+def _guardar(net, filename):
+    os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
+    net.write_html(filename, notebook=False)
+    _inyectar_click_handler(filename)
+
+
+# ======================================================================
+# Grafo de UN objetivo
+# ======================================================================
+def generate_graph(reporte, filename=None):
+    """Genera un grafo INTERACTIVO (HTML). Clic en un nodo abre su URL."""
     target = reporte.get("target", "desconocido")
     tipo_target = reporte.get("type", "unknown")
     data = reporte.get("data", {})
 
-    print(f"{Fore.YELLOW}[+] Generando grafo de relaciones para: {target}")
+    if filename is None:
+        filename = _nombre_unico("grafo", target)
 
-    dot = Digraph(
-        name="OSINT",
-        format="png",
-        graph_attr={
-            "rankdir": "LR",       # Izquierda a derecha
-            "bgcolor": "#f4f6f9",
-            "fontname": "Helvetica",
-            "splines": "true",
-            "overlap": "false",
-            "nodesep": "0.5",
-            "ranksep": "1.0"
-        },
-        node_attr={"fontname": "Helvetica", "fontsize": "11"},
-        edge_attr={"color": "#7f8c8d", "arrowsize": "0.7"}
-    )
+    print(f"{Fore.YELLOW}[+] Generando grafo interactivo para: {target}")
 
-    # Nodo central: el target
+    net = _nueva_red()
+    net.barnes_hut(gravity=-8000, spring_length=120)
+
     id_target = "target"
-    _nodo(dot, id_target, f"{target}\n({tipo_target})", "target")
+    _nodo(net, id_target, f"{target}", "target", title=f"Objetivo ({tipo_target})")
 
-    # ------------------------------------------------------------------
-    # CASO 1: DOMINIO
-    # ------------------------------------------------------------------
+    # ---------------- DOMINIO ----------------
     if tipo_target == "domain":
-        # WHOIS
-        if data.get("pasivo", {}).get("whois", {}).get("registrador"):
-            id_whois = "whois"
-            _nodo(dot, id_whois, "WHOIS", "dns")
-            dot.edge(id_target, id_whois)
-            registrador = data["pasivo"]["whois"].get("registrador", "")[:40]
-            id_reg = "registrador"
-            _nodo(dot, id_reg, registrador, "subdominio")
-            dot.edge(id_whois, id_reg)
+        whois = data.get("pasivo", {}).get("whois", {})
+        if whois.get("registrador"):
+            _nodo(net, "whois", "WHOIS", "dns")
+            net.add_edge(id_target, "whois")
+            reg = str(whois.get("registrador", ""))[:40]
+            _nodo(net, "registrador", reg, "subdominio")
+            net.add_edge("whois", "registrador")
 
-        # DNS
         dns_data = data.get("pasivo", {}).get("dns", {})
         for tipo_reg, valores in dns_data.items():
             if not valores:
                 continue
             id_dns = f"dns_{tipo_reg}"
-            _nodo(dot, id_dns, tipo_reg, "dns")
-            dot.edge(id_target, id_dns)
-            for i, valor in enumerate(valores[:3]):  # máximo 3 por tipo
-                id_val = f"dns_{tipo_reg}_{i}"
-                _nodo(dot, id_val, valor[:40], "subdominio")
-                dot.edge(id_dns, id_val)
+            _nodo(net, id_dns, tipo_reg, "dns")
+            net.add_edge(id_target, id_dns)
+            for i, valor in enumerate(valores[:3]):
+                vid = f"dns_{tipo_reg}_{i}"
+                _nodo(net, vid, str(valor)[:40], "subdominio")
+                net.add_edge(id_dns, vid)
 
-        # theHarvester
         harv = data.get("theharvester", {})
         if harv.get("subdominios"):
-            id_harv = "theHarvester"
-            _nodo(dot, id_harv, f"theHarvester\n({len(harv['subdominios'])} subs)", "dns")
-            dot.edge(id_target, id_harv)
-            for i, sub in enumerate(harv["subdominios"][:15]):  # máximo 15
-                id_sub = f"harv_sub_{i}"
-                _nodo(dot, id_sub, sub[:40], "subdominio")
-                dot.edge(id_harv, id_sub)
-        if harv.get("emails"):
-            for i, email in enumerate(harv["emails"][:5]):
-                id_mail = f"harv_mail_{i}"
-                _nodo(dot, id_mail, email[:35], "email")
-                dot.edge(id_target, id_mail)
+            _nodo(net, "theHarvester", f"theHarvester ({len(harv['subdominios'])})", "dns")
+            net.add_edge(id_target, "theHarvester")
+            for i, sub in enumerate(harv["subdominios"][:15]):
+                sid = f"harv_sub_{i}"
+                sub = str(sub)
+                _nodo(net, sid, sub[:40], "subdominio", url=f"http://{sub}")
+                net.add_edge("theHarvester", sid)
+        for i, email in enumerate(harv.get("emails", [])[:5]):
+            mid = f"harv_mail_{i}"
+            _nodo(net, mid, str(email)[:35], "email")
+            net.add_edge(id_target, mid)
 
-        # Nmap - Puertos abiertos
         nmap = data.get("activo", {}).get("nmap", {})
         for i, p in enumerate(nmap.get("puertos_abiertos", [])[:10]):
-            id_p = f"puerto_{i}"
-            label = f"Puerto {p['puerto']}\n{p['servicio']}"
-            _nodo(dot, id_p, label, "puerto")
-            dot.edge(id_target, id_p)
+            pid = f"puerto_{i}"
+            _nodo(net, pid, f"{p['puerto']}/{p['servicio']}", "puerto",
+                  title=f"Puerto {p['puerto']} - {p.get('version', '')}")
+            net.add_edge(id_target, pid)
 
-        # Directorios encontrados
         dirs = data.get("activo", {}).get("directorios", {}).get("directorios_encontrados", [])
+        base = target if str(target).startswith("http") else f"http://{target}"
         for i, d in enumerate(dirs[:8]):
-            id_d = f"dir_{i}"
-            _nodo(dot, id_d, d["path"], "subdominio")
-            dot.edge(id_target, id_d)
+            did = f"dir_{i}"
+            _nodo(net, did, d["path"], "subdominio",
+                  title=f"Status {d.get('status_code')}",
+                  url=f"{base.rstrip('/')}{d['path']}")
+            net.add_edge(id_target, did)
 
-    # ------------------------------------------------------------------
-    # CASO 2: EMAIL
-    # ------------------------------------------------------------------
+    # ---------------- EMAIL ----------------
     elif tipo_target == "email":
-        # Brechas HIBP
-        brechas_hibp = data.get("brechas", {}).get("brechas", [])
+        brechas_hibp = data.get("brechas_hibp", {}).get("brechas", [])
         if brechas_hibp:
-            id_hibp = "hibp"
-            _nodo(dot, id_hibp, f"HIBP\n({len(brechas_hibp)} brechas)", "brecha")
-            dot.edge(id_target, id_hibp)
+            _nodo(net, "hibp", f"HIBP ({len(brechas_hibp)})", "brecha")
+            net.add_edge(id_target, "hibp")
             for i, b in enumerate(brechas_hibp[:10]):
-                id_b = f"hibp_{i}"
-                _nodo(dot, id_b, b.get("nombre", "?")[:30], "brecha")
-                dot.edge(id_hibp, id_b)
+                bid = f"hibp_{i}"
+                _nodo(net, bid, str(b.get("nombre", "?"))[:30], "brecha",
+                      title=f"Brecha {b.get('nombre', '?')} ({b.get('fecha', '?')})")
+                net.add_edge("hibp", bid)
 
-        # Brechas XposedOrNot
         brechas_xon = data.get("brechas_xposedornot", {}).get("brechas", [])
         if brechas_xon:
-            id_xon = "xon"
-            _nodo(dot, id_xon, f"XposedOrNot\n({len(brechas_xon)} brechas)", "brecha")
-            dot.edge(id_target, id_xon)
-            # Solo mostramos las primeras 15 para no saturar
+            _nodo(net, "xon", f"XposedOrNot ({len(brechas_xon)})", "brecha")
+            net.add_edge(id_target, "xon")
             for i, b in enumerate(brechas_xon[:15]):
-                id_b = f"xon_{i}"
-                _nodo(dot, id_b, b.get("nombre", "?")[:30], "brecha")
-                dot.edge(id_xon, id_b)
+                bid = f"xon_{i}"
+                _nodo(net, bid, str(b.get("nombre", "?"))[:30], "brecha")
+                net.add_edge("xon", bid)
 
-    # ------------------------------------------------------------------
-    # CASO 3: USERNAME
-    # ------------------------------------------------------------------
+        sitios = data.get("holehe", {}).get("sitios", [])
+        if sitios:
+            _nodo(net, "holehe", f"Holehe ({len(sitios)})", "dns")
+            net.add_edge(id_target, "holehe")
+            for i, s in enumerate(sitios[:20]):
+                sid = f"holehe_{i}"
+                dominio = str(s.get("sitio", "?"))
+                _nodo(net, sid, dominio[:25], "perfil",
+                      title=f"Registrado en {dominio}", url=f"https://{dominio}")
+                net.add_edge("holehe", sid)
+
+    # ---------------- USERNAME ----------------
     elif tipo_target == "username":
         perfiles = data.get("social", {}).get("perfiles", [])
         if perfiles:
-            id_sherlock = "sherlock"
-            _nodo(dot, id_sherlock, f"Sherlock\n({len(perfiles)} perfiles)", "perfil")
-            dot.edge(id_target, id_sherlock)
-            for i, p in enumerate(perfiles[:25]):  # máximo 25 redes
-                id_p = f"perfil_{i}"
-                _nodo(dot, id_p, p.get("red", "?")[:25], "perfil")
-                dot.edge(id_sherlock, id_p)
+            _nodo(net, "sherlock", f"Sherlock ({len(perfiles)})", "perfil")
+            net.add_edge(id_target, "sherlock")
+            for i, p in enumerate(perfiles[:25]):
+                pid = f"perfil_{i}"
+                _nodo(net, pid, str(p.get("red", "?"))[:25], "perfil",
+                      title=p.get("red", ""), url=p.get("url", ""))
+                net.add_edge("sherlock", pid)
 
-    # ------------------------------------------------------------------
-    # Guardar el PNG
-    # ------------------------------------------------------------------
-    # Aseguramos que la carpeta output existe
-    os.makedirs("output", exist_ok=True)
-    ruta_png = dot.render(filename=filename, cleanup=True)
+        perfiles_m = data.get("maigret", {}).get("perfiles", [])
+        if perfiles_m:
+            _nodo(net, "maigret", f"Maigret ({len(perfiles_m)})", "username")
+            net.add_edge(id_target, "maigret")
+            for i, p in enumerate(perfiles_m[:30]):
+                pid = f"maigret_{i}"
+                _nodo(net, pid, str(p.get("red", "?"))[:25], "perfil",
+                      title=p.get("red", ""), url=p.get("url", ""))
+                net.add_edge("maigret", pid)
 
-    print(f"{Fore.GREEN}[*] Grafo guardado en: {ruta_png}")
-    return ruta_png
+    # ---------------- TELÉFONO ----------------
+    elif tipo_target == "phone":
+        tel = data.get("telefono", {})
+        if tel and not tel.get("error"):
+            if tel.get("pais"):
+                _nodo(net, "pais", f"País: {tel['pais']}", "dns")
+                net.add_edge(id_target, "pais")
+            if tel.get("operador") and tel["operador"] != "Desconocido":
+                _nodo(net, "operador", f"Operador: {tel['operador']}", "subdominio")
+                net.add_edge(id_target, "operador")
+            if tel.get("tipo_linea"):
+                _nodo(net, "tipo", f"Tipo: {tel['tipo_linea']}", "puerto")
+                net.add_edge(id_target, "tipo")
+            for i, zh in enumerate(tel.get("zonas_horarias", [])[:3]):
+                _nodo(net, f"zh_{i}", zh, "perfil")
+                net.add_edge(id_target, f"zh_{i}")
+            estado = "✓ Válido" if tel.get("valido") else "✗ No válido"
+            _nodo(net, "validez", estado, "dns" if tel.get("valido") else "brecha")
+            net.add_edge(id_target, "validez")
+
+    _guardar(net, filename)
+    print(f"{Fore.GREEN}[*] Grafo interactivo guardado en: {filename}")
+    return filename
+
+
+# ======================================================================
+# Clic en nodo -> abrir su URL
+# ======================================================================
+def _inyectar_click_handler(filename):
+    """Añade un listener de clic a vis.js: al pulsar un nodo con URL, la abre."""
+    js = """
+    <script type="text/javascript">
+      // Espera a que la red esté lista y engancha el evento de clic
+      setTimeout(function () {
+        if (typeof network !== "undefined") {
+          network.on("click", function (params) {
+            if (params.nodes.length > 0) {
+              var nodo = nodes.get(params.nodes[0]);
+              if (nodo && nodo.url) {
+                window.open(nodo.url, "_blank");
+              }
+            }
+          });
+        }
+      }, 1000);
+    </script>
+    """
+    with open(filename, "r", encoding="utf-8") as f:
+        html = f.read()
+    html = html.replace("</body>", js + "\n</body>")
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(html)
+
+
+# ======================================================================
+# Grafo MAESTRO de una sesión interactiva
+# ======================================================================
+def generate_session_graph(reportes, historial, filename=None):
+    """
+    Conecta todos los objetivos de una sesión interactiva,
+    mostrando cómo se pivotó de uno a otro (flechas rojas discontinuas).
+    'reportes' = lista de reportes. 'historial' = lista de {target, type, origen}.
+    """
+    if filename is None:
+        fecha = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"output/sesion_{fecha}.html"
+
+    print(f"{Fore.YELLOW}[+] Generando grafo maestro de la sesión ({len(reportes)} objetivos)...")
+
+    net = _nueva_red(height="800px")
+    net.barnes_hut(gravity=-12000, spring_length=180, spring_strength=0.02)
+
+    id_raiz = {}
+    for idx, rep in enumerate(reportes):
+        target = rep.get("target", "?")
+        tipo = rep.get("type", "unknown")
+        root_id = f"obj_{idx}"
+        id_raiz[target] = root_id
+        _nodo(net, root_id, f"{target}\n({tipo})", "target",
+              title=f"Objetivo {tipo}: {target}")
+        _añadir_hallazgos(net, rep, root_id, idx)
+
+    for entrada in historial:
+        target, origen = entrada["target"], entrada.get("origen")
+        if origen and origen in id_raiz and target in id_raiz:
+            net.add_edge(id_raiz[origen], id_raiz[target],
+                         color="#e74c3c", width=3, title="pivote", dashes=True)
+
+    _guardar(net, filename)
+    print(f"{Fore.GREEN}[*] Grafo maestro guardado en: {filename}")
+    return filename
+
+
+def _añadir_hallazgos(net, rep, root_id, idx):
+    """Cuelga los hallazgos de un reporte de su nodo raíz. El sufijo evita colisiones de IDs."""
+    data = rep.get("data", {})
+    tipo = rep.get("type", "unknown")
+    p = f"_{idx}"
+
+    if tipo == "email":
+        for i, b in enumerate(data.get("brechas_hibp", {}).get("brechas", [])[:8]):
+            nid = f"hibp{p}_{i}"
+            _nodo(net, nid, str(b.get("nombre", "?"))[:25], "brecha")
+            net.add_edge(root_id, nid)
+        for i, b in enumerate(data.get("brechas_xposedornot", {}).get("brechas", [])[:8]):
+            nid = f"xon{p}_{i}"
+            _nodo(net, nid, str(b.get("nombre", "?"))[:25], "brecha")
+            net.add_edge(root_id, nid)
+        for i, s in enumerate(data.get("holehe", {}).get("sitios", [])[:15]):
+            nid = f"hol{p}_{i}"
+            dom = str(s.get("sitio", "?"))
+            _nodo(net, nid, dom[:22], "perfil", url=f"https://{dom}")
+            net.add_edge(root_id, nid)
+
+    elif tipo == "username":
+        for i, perf in enumerate(data.get("social", {}).get("perfiles", [])[:15]):
+            nid = f"she{p}_{i}"
+            _nodo(net, nid, str(perf.get("red", "?"))[:22], "perfil", url=perf.get("url", ""))
+            net.add_edge(root_id, nid)
+        for i, perf in enumerate(data.get("maigret", {}).get("perfiles", [])[:15]):
+            nid = f"mai{p}_{i}"
+            _nodo(net, nid, str(perf.get("red", "?"))[:22], "username", url=perf.get("url", ""))
+            net.add_edge(root_id, nid)
+
+    elif tipo == "domain":
+        harv = data.get("theharvester", {})
+        for i, sub in enumerate(harv.get("subdominios", [])[:12]):
+            nid = f"sub{p}_{i}"
+            _nodo(net, nid, str(sub)[:30], "subdominio", url=f"http://{sub}")
+            net.add_edge(root_id, nid)
+        nmap = data.get("activo", {}).get("nmap", {})
+        for i, pt in enumerate(nmap.get("puertos_abiertos", [])[:10]):
+            nid = f"prt{p}_{i}"
+            _nodo(net, nid, f"{pt['puerto']}/{pt['servicio']}", "puerto")
+            net.add_edge(root_id, nid)
+
+    elif tipo == "phone":
+        tel = data.get("telefono", {})
+        if tel.get("operador") and tel["operador"] != "Desconocido":
+            nid = f"op{p}"
+            _nodo(net, nid, f"Op: {tel['operador']}", "subdominio")
+            net.add_edge(root_id, nid)
+        if tel.get("pais"):
+            nid = f"pais{p}"
+            _nodo(net, nid, tel["pais"], "dns")
+            net.add_edge(root_id, nid)

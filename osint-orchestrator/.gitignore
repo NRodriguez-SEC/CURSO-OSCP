@@ -1,0 +1,15 @@
+# Resultados de investigaciones (datos sensibles de objetivos reales)
+output/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Secretos
+.env
+*.key
+
+# SO
+.DS_Store
