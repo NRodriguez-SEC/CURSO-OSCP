@@ -54,6 +54,18 @@ osint-orchestrator/
 
 Probado en Linux (Ubuntu/Kali, también dentro de WSL2).
 
+### Opción rápida: script de instalación
+
+```bash
+cd osint-orchestrator
+./install.sh                 # instala todo
+./install.sh --no-harvester  # omite theHarvester
+```
+
+Deja listos el entorno virtual, las librerías y las herramientas externas (Sherlock, Maigret, theHarvester). Al terminar, abre una terminal nueva (por el PATH de pipx), activa el entorno (`source .venv/bin/activate`) y ejecútala.
+
+### Opción manual
+
 **1. Paquetes del sistema**
 
 ```bash
