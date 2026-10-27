@@ -2,7 +2,7 @@ import json
 import os
 import re
 from datetime import datetime
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, ChainableUndefined
 from colorama import Fore
 
 def _generar_nombre_base(reporte):
@@ -19,7 +19,8 @@ def generate_json(data, filename=None):
     if filename is None:
         nombre_base = _generar_nombre_base(data)
         filename = f"output/{nombre_base}.json"
-    
+    os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
+
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, default=str, ensure_ascii=False)
     print(f"{Fore.GREEN}[*] Reporte JSON guardado en: {filename}")
@@ -30,8 +31,10 @@ def generate_html(data, filename=None):
     if filename is None:
         nombre_base = _generar_nombre_base(data)
         filename = f"output/{nombre_base}.html"
-    
-    env = Environment(loader=FileSystemLoader('report'))
+    os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
+
+    # ChainableUndefined: si falta una sección (p.ej. un módulo falló), se muestra vacía en vez de romper
+    env = Environment(loader=FileSystemLoader('report'), undefined=ChainableUndefined)
     template = env.get_template('template.html')
     html_output = template.render(reporte=data)
     

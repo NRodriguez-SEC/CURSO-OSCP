@@ -4,7 +4,9 @@ Flujo de pivotes: cada hallazgo abre nuevos objetivos sobre los que saltar.
 Ejecuta:  python3 interactive.py
 """
 import os
+import re
 import sys
+from datetime import datetime
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -97,6 +99,45 @@ def construir_arbol(historial):
     console.print(arbol)
 
 
+def limpiar_nombre(nombre):
+    """Deja el nombre apto para fichero: quita extensión, espacios y símbolos raros."""
+    nombre = nombre.strip()
+    nombre = re.sub(r'\.(html|json)$', '', nombre, flags=re.IGNORECASE)
+    nombre = re.sub(r'[^\w.-]', '_', nombre)
+    return nombre.strip('._')
+
+
+def rutas_salida(nombre, n_reportes, carpeta="output"):
+    """Calcula los ficheros a generar a partir del nombre elegido.
+    1 objetivo  -> nombre.html / nombre.json / nombre_grafo.html
+    Varios      -> nombre_1.html ... + nombre_sesion.html (grafo maestro)"""
+    rutas = []
+    for i in range(1, n_reportes + 1):
+        base = os.path.join(carpeta, nombre if n_reportes == 1 else f"{nombre}_{i}")
+        rutas.append({"html": f"{base}.html", "json": f"{base}.json", "grafo": f"{base}_grafo.html"})
+    sesion = os.path.join(carpeta, f"{nombre}_sesion.html") if n_reportes > 1 else None
+    return rutas, sesion
+
+
+def pedir_nombre(n_reportes):
+    """Pregunta el nombre de la investigación y evita sobrescribir ficheros existentes."""
+    por_defecto = f"investigacion_{datetime.now().strftime('%Y%m%d_%H%M')}"
+    while True:
+        nombre = limpiar_nombre(Prompt.ask("[bold cyan]¿Cómo quieres llamar a esta investigación?[/]",
+                                           default=por_defecto))
+        if not nombre:
+            console.print("[red]Nombre no válido, prueba otro.[/]")
+            continue
+        rutas, sesion = rutas_salida(nombre, n_reportes)
+        existentes = [p for r in rutas for p in r.values() if os.path.exists(p)]
+        if sesion and os.path.exists(sesion):
+            existentes.append(sesion)
+        if existentes and not Confirm.ask(
+                f"[yellow]Ya existe '{nombre}' en output/. ¿Sobrescribir?[/]", default=False):
+            continue
+        return nombre, rutas, sesion
+
+
 def main():
     banner()
     os.makedirs("output", exist_ok=True)
@@ -170,18 +211,32 @@ def main():
     construir_arbol(historial)
     console.print(f"\n[bold green]Total de objetivos investigados:[/] {len(reportes)}")
 
-    if Confirm.ask("¿Generar reportes y grafo maestro de la sesión?", default=True):
+    if reportes and Confirm.ask("¿Generar reportes y grafos de la sesión?", default=True):
         from report import generator, graph
-        for rep in reportes:
+        nombre, rutas, sesion = pedir_nombre(len(reportes))
+
+        for rep, r in zip(reportes, rutas):
             try:
-                rep["grafo"] = graph.generate_graph(rep)
+                rep["grafo"] = graph.generate_graph(rep, filename=r["grafo"])
             except Exception as e:
                 console.print(f"[red]No se pudo generar el grafo de {rep['target']}: {e}[/]")
-            generator.generate_json(rep)
-            generator.generate_html(rep)
-        ruta = graph.generate_session_graph(reportes, historial)
-        console.print(f"[bold green]✓ Grafo maestro:[/] {ruta}")
-        console.print("[bold green]✓ Reportes individuales en output/[/]")
+            generator.generate_json(rep, filename=r["json"])
+            generator.generate_html(rep, filename=r["html"])
+
+        if sesion:
+            graph.generate_session_graph(reportes, historial, filename=sesion)
+
+        # Resumen de ficheros generados
+        t = Table(title=f"Ficheros de '{nombre}'", box=box.ROUNDED, header_style="bold magenta")
+        t.add_column("Objetivo", style="yellow")
+        t.add_column("Reporte", style="white")
+        t.add_column("Grafo", style="white")
+        for rep, r in zip(reportes, rutas):
+            t.add_row(rep["target"], os.path.basename(r["html"]), os.path.basename(r["grafo"]))
+        console.print(t)
+        if sesion:
+            console.print(f"[bold green]✓ Grafo maestro:[/] {os.path.basename(sesion)}")
+        console.print("[dim]Todo está en la carpeta output/[/]")
 
 
 if __name__ == "__main__":
