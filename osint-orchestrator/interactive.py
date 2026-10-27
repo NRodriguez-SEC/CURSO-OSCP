@@ -3,6 +3,7 @@ interactive.py - Modo de investigación interactiva (man-in-the-loop).
 Flujo de pivotes: cada hallazgo abre nuevos objetivos sobre los que saltar.
 Ejecuta:  python3 interactive.py
 """
+import argparse
 import os
 import re
 import sys
@@ -138,15 +139,39 @@ def pedir_nombre(n_reportes):
         return nombre, rutas, sesion
 
 
+TIPOS = ["domain", "email", "username", "phone"]
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Investigación OSINT interactiva con pivotes.",
+        epilog="Ejemplos:  python3 interactive.py   |   python3 interactive.py -t nahia.jmnz --type username",
+    )
+    parser.add_argument("-t", "--target", help="Objetivo inicial (si se omite, se pregunta).")
+    parser.add_argument("--type", choices=TIPOS, help="Fuerza el tipo del objetivo inicial.")
+    return parser.parse_args()
+
+
+def confirmar_tipo(objetivo):
+    """Detecta el tipo y deja que el analista lo confirme o corrija.
+    Un usuario con punto (nombre.apellido) tiene la misma forma que un dominio."""
+    tipo = detect_target_type(objetivo)
+    if tipo == "unknown":
+        return Prompt.ask("No se detectó el tipo. Elige", choices=TIPOS)
+    aviso = ""
+    if tipo == "domain" and objetivo.count(".") == 1 and "/" not in objetivo:
+        aviso = " [dim](si es un usuario con punto, elige username)[/]"
+    console.print(f"[green]Tipo detectado:[/] [bold]{tipo}[/]{aviso}")
+    return Prompt.ask("Confirma el tipo", choices=TIPOS, default=tipo)
+
+
 def main():
+    args = parse_args()
     banner()
     os.makedirs("output", exist_ok=True)
 
-    objetivo = Prompt.ask("[bold cyan]Objetivo inicial[/]").strip()
-    tipo = detect_target_type(objetivo)
-    if tipo == "unknown":
-        tipo = Prompt.ask("No se detectó el tipo. Elige",
-                          choices=["domain", "email", "username", "phone"])
+    objetivo = (args.target or Prompt.ask("[bold cyan]Objetivo inicial[/]")).strip()
+    tipo = args.type or confirmar_tipo(objetivo)
 
     cola = [(objetivo, tipo, None)]   # (target, tipo, origen)
     historial = []
