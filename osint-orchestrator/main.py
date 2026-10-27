@@ -75,9 +75,10 @@ def run_investigation(target, target_type, run_active=False, run_harvester=False
 
     elif target_type == "username":
         print(f"{Fore.GREEN}[+] Cargando módulos de HUELLA DIGITAL...")
-        from modules.person import social, maigret
+        from modules.person import social, maigret, cruce
         reporte["data"]["social"] = social.run(target)
         reporte["data"]["maigret"] = maigret.run(target)
+        reporte["data"]["cruce"] = cruce.run(reporte["data"]["social"], reporte["data"]["maigret"])
 
     elif target_type == "phone":
         print(f"{Fore.GREEN}[+] Cargando módulo de ANÁLISIS DE TELÉFONO...")

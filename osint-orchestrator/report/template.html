@@ -170,6 +170,33 @@
 
         <!-- SECCIÓN USERNAME -->
         {% if reporte.type == "username" %}
+            {% set cr = reporte.data.cruce %}
+            {% if cr and cr.perfiles %}
+                <h2>🎯 Perfiles cruzados (Sherlock + Maigret)</h2>
+                <p>
+                    <span class="badge" style="background:#27ae60;">✓ {{ cr.confirmados }} confirmados por ambas</span>
+                    <span class="badge" style="background:#f1c40f; color:#2c3e50;">? {{ cr.solo_sherlock + cr.solo_maigret }} solo una fuente</span>
+                </p>
+                <p><small>Los perfiles con una sola fuente pueden ser falsos positivos: verifícalos abriendo el enlace.</small></p>
+                <table>
+                    <tr><th>Confianza</th><th>Sitio</th><th>Fuentes</th><th>URL</th></tr>
+                    {% for p in cr.perfiles %}
+                    <tr>
+                        <td>
+                            {% if p.confianza == "alta" %}
+                                <span class="badge" style="background:#27ae60;">Alta</span>
+                            {% else %}
+                                <span class="badge" style="background:#f1c40f; color:#2c3e50;">Verificar</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ p.red }}</td>
+                        <td>{{ p.fuentes|join(' + ') }}</td>
+                        <td><a href="{{ p.url }}" target="_blank">{{ p.url }}</a></td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+
             <h2>🌐 Perfiles en Redes Sociales (Sherlock)</h2>
             {% if reporte.data.social.error %}
                 <p class="error"><strong>⚠️ Error:</strong> {{ reporte.data.social.error }}</p>

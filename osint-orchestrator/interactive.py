@@ -79,6 +79,10 @@ def tabla_hallazgos(reporte):
     elif tipo == "username":
         t.add_row("Sherlock (perfiles)", str(len(data.get("social", {}).get("perfiles", []))))
         t.add_row("Maigret (perfiles)", str(len(data.get("maigret", {}).get("perfiles", []))))
+        cr = data.get("cruce", {})
+        t.add_row("[green]✓ Confirmados por ambas[/]", f"[green]{cr.get('confirmados', 0)}[/]")
+        t.add_row("[yellow]? Solo una fuente (verificar)[/]",
+                  f"[yellow]{cr.get('solo_sherlock', 0) + cr.get('solo_maigret', 0)}[/]")
     elif tipo == "phone":
         tel = data.get("telefono", {})
         t.add_row("País", str(tel.get("pais", "?")))

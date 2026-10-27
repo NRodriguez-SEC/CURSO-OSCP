@@ -15,7 +15,18 @@ COLORES = {
     "perfil":     {"color": "#bb8fce", "shape": "box",      "size": 14},
     "puerto":     {"color": "#16a085", "shape": "hexagon",  "size": 16},
     "dns":        {"color": "#f39c12", "shape": "diamond",  "size": 16},
+    "confirmado": {"color": "#27ae60", "shape": "box",      "size": 16},   # Sherlock + Maigret
+    "dudoso":     {"color": "#f1c40f", "shape": "box",      "size": 14},   # solo una fuente
 }
+
+
+def _perfiles_cruzados(data):
+    """Perfiles con confianza. Usa el cruce si existe; si no (reportes antiguos), lo calcula."""
+    cruce = data.get("cruce")
+    if cruce and "perfiles" in cruce:
+        return cruce["perfiles"]
+    from modules.person import cruce as modulo_cruce
+    return modulo_cruce.run(data.get("social"), data.get("maigret"))["perfiles"]
 
 
 def _nodo(net, id_nodo, label, tipo="dominio", title=None, url=None):
@@ -163,25 +174,24 @@ def generate_graph(reporte, filename=None):
 
     # ---------------- USERNAME ----------------
     elif tipo_target == "username":
-        perfiles = data.get("social", {}).get("perfiles", [])
-        if perfiles:
-            _nodo(net, "sherlock", f"Sherlock ({len(perfiles)})", "perfil")
-            net.add_edge(id_target, "sherlock")
-            for i, p in enumerate(perfiles[:25]):
-                pid = f"perfil_{i}"
-                _nodo(net, pid, str(p.get("red", "?"))[:25], "perfil",
-                      title=p.get("red", ""), url=p.get("url", ""))
-                net.add_edge("sherlock", pid)
-
-        perfiles_m = data.get("maigret", {}).get("perfiles", [])
-        if perfiles_m:
-            _nodo(net, "maigret", f"Maigret ({len(perfiles_m)})", "username")
-            net.add_edge(id_target, "maigret")
-            for i, p in enumerate(perfiles_m[:30]):
-                pid = f"maigret_{i}"
-                _nodo(net, pid, str(p.get("red", "?"))[:25], "perfil",
-                      title=p.get("red", ""), url=p.get("url", ""))
-                net.add_edge("maigret", pid)
+        perfiles = _perfiles_cruzados(data)
+        grupos = [
+            ("alta", "conf", "✓ Confirmados", "confirmado"),
+            ("media", "dud", "? Sin confirmar", "dudoso"),
+        ]
+        for confianza, gid, titulo, estilo in grupos:
+            del_grupo = [p for p in perfiles if p["confianza"] == confianza]
+            if not del_grupo:
+                continue
+            _nodo(net, gid, f"{titulo} ({len(del_grupo)})", estilo,
+                  title="Encontrado por Sherlock y Maigret" if confianza == "alta"
+                  else "Solo una fuente: verificar a mano")
+            net.add_edge(id_target, gid)
+            for i, p in enumerate(del_grupo[:30]):
+                pid = f"{gid}_{i}"
+                _nodo(net, pid, str(p["red"])[:25], estilo,
+                      title=f"{p['red']} — {' + '.join(p['fuentes'])}", url=p["url"])
+                net.add_edge(gid, pid)
 
     # ---------------- TELÉFONO ----------------
     elif tipo_target == "phone":
@@ -298,13 +308,11 @@ def _añadir_hallazgos(net, rep, root_id, idx):
             net.add_edge(root_id, nid)
 
     elif tipo == "username":
-        for i, perf in enumerate(data.get("social", {}).get("perfiles", [])[:15]):
-            nid = f"she{p}_{i}"
-            _nodo(net, nid, str(perf.get("red", "?"))[:22], "perfil", url=perf.get("url", ""))
-            net.add_edge(root_id, nid)
-        for i, perf in enumerate(data.get("maigret", {}).get("perfiles", [])[:15]):
-            nid = f"mai{p}_{i}"
-            _nodo(net, nid, str(perf.get("red", "?"))[:22], "username", url=perf.get("url", ""))
+        for i, perf in enumerate(_perfiles_cruzados(data)[:25]):
+            nid = f"usr{p}_{i}"
+            estilo = "confirmado" if perf["confianza"] == "alta" else "dudoso"
+            _nodo(net, nid, str(perf["red"])[:22], estilo,
+                  title=f"{perf['red']} — {' + '.join(perf['fuentes'])}", url=perf["url"])
             net.add_edge(root_id, nid)
 
     elif tipo == "domain":
