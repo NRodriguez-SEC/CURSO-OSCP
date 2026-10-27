@@ -36,13 +36,17 @@ def run(telefono):
         "posible": posible,
         "pais": geocoder.description_for_number(num, "es") or "Desconocido",
         "codigo_pais": num.country_code,
+        # OJO: es el operador al que se ASIGNÓ el rango originalmente, NO el actual.
+        # La portabilidad hace que el real pueda ser otro (ej. un número de Movistar
+        # portado a DIGI). Saber el operador actual requiere una consulta HLR de pago.
         "operador": carrier.name_for_number(num, "es") or "Desconocido",
+        "operador_nota": "Asignación original del rango; el operador actual puede diferir por portabilidad.",
         "tipo_linea": TIPOS.get(number_type(num), "Desconocido"),
         "zonas_horarias": list(timezone.time_zones_for_number(num)),
     }
 
     if valido:
-        print(f"{Fore.GREEN}    - Válido | {resultado['pais']} | {resultado['operador']} | {resultado['tipo_linea']}")
+        print(f"{Fore.GREEN}    - Válido | {resultado['pais']} | {resultado['operador']} (orig.) | {resultado['tipo_linea']}")
     else:
         print(f"{Fore.RED}    - Número no válido.")
 

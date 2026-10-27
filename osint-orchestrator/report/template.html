@@ -253,10 +253,11 @@
                         <tr><th>Internacional</th><td>{{ reporte.data.telefono.internacional }}</td></tr>
                         <tr><th>Válido</th><td>{{ "Sí" if reporte.data.telefono.valido else "No" }}</td></tr>
                         <tr><th>País</th><td>{{ reporte.data.telefono.pais }} (+{{ reporte.data.telefono.codigo_pais }})</td></tr>
-                        <tr><th>Operador</th><td>{{ reporte.data.telefono.operador }}</td></tr>
+                        <tr><th>Operador (asignación original)</th><td>{{ reporte.data.telefono.operador }}</td></tr>
                         <tr><th>Tipo de línea</th><td>{{ reporte.data.telefono.tipo_linea }}</td></tr>
                         <tr><th>Zonas horarias</th><td>{{ reporte.data.telefono.zonas_horarias|join(', ') }}</td></tr>
                     </table>
+                    <p><small>⚠️ El operador mostrado es el del <strong>rango asignado originalmente</strong>. Por la portabilidad, el operador actual puede ser distinto (p. ej. un número de Movistar portado a DIGI). Para el operador real se necesita una consulta HLR, que es de pago.</small></p>
                 {% endif %}
             {% else %}
                 <p>No se analizó ningún teléfono.</p>

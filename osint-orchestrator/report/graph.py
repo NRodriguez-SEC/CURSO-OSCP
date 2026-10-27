@@ -201,7 +201,8 @@ def generate_graph(reporte, filename=None):
                 _nodo(net, "pais", f"País: {tel['pais']}", "dns")
                 net.add_edge(id_target, "pais")
             if tel.get("operador") and tel["operador"] != "Desconocido":
-                _nodo(net, "operador", f"Operador: {tel['operador']}", "subdominio")
+                _nodo(net, "operador", f"Op. original: {tel['operador']}", "subdominio",
+                      title="Operador del rango original; puede variar por portabilidad")
                 net.add_edge(id_target, "operador")
             if tel.get("tipo_linea"):
                 _nodo(net, "tipo", f"Tipo: {tel['tipo_linea']}", "puerto")
@@ -331,7 +332,8 @@ def _añadir_hallazgos(net, rep, root_id, idx):
         tel = data.get("telefono", {})
         if tel.get("operador") and tel["operador"] != "Desconocido":
             nid = f"op{p}"
-            _nodo(net, nid, f"Op: {tel['operador']}", "subdominio")
+            _nodo(net, nid, f"Op. original: {tel['operador']}", "subdominio",
+                  title="Operador del rango original; puede variar por portabilidad")
             net.add_edge(root_id, nid)
         if tel.get("pais"):
             nid = f"pais{p}"

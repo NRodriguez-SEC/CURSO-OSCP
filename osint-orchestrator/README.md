@@ -151,6 +151,7 @@ En los grafos de username, los perfiles se colorean según el cruce de fuentes:
 - Holehe y Maigret dependen de los servicios consultados y pueden fallar por bloqueos o cambios en ellos.
 - Un username con punto (`nombre.apellido`) tiene la misma forma que un dominio: confirma el tipo al empezar.
 - Sin `HIBP_API_KEY`, los resultados de HIBP son de ejemplo.
+- **Teléfono**: el operador es el del rango asignado originalmente, no el actual. La portabilidad puede hacer que difieran (un número de Movistar portado a DIGI sigue figurando como Movistar). El operador real requiere una consulta HLR de pago.
 
 ## Créditos
 
