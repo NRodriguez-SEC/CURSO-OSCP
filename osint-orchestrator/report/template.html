@@ -258,6 +258,24 @@
                         <tr><th>Zonas horarias</th><td>{{ reporte.data.telefono.zonas_horarias|join(', ') }}</td></tr>
                     </table>
                     <p><small>⚠️ El operador mostrado es el del <strong>rango asignado originalmente</strong>. Por la portabilidad, el operador actual puede ser distinto (p. ej. un número de Movistar portado a DIGI). Para el operador real se necesita una consulta HLR, que es de pago.</small></p>
+
+                    <h3>🌐 Cuentas Registradas (ignorant)</h3>
+                    {% if reporte.data.ignorant %}
+                        {% if reporte.data.ignorant.error %}
+                            <p class="error"><strong>⚠️ Error:</strong> {{ reporte.data.ignorant.error }}</p>
+                        {% elif reporte.data.ignorant.sitios %}
+                            <p>Registrado en <strong>{{ reporte.data.ignorant.sitios|length }}</strong> sitios:</p>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+                                {% for sitio in reporte.data.ignorant.sitios %}
+                                <span style="background-color: #16a085; color: white; padding: 4px 10px; border-radius: 15px; font-size: 0.85em;">{{ sitio.sitio }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p>No se encontraron cuentas asociadas al número.</p>
+                        {% endif %}
+                    {% else %}
+                        <p>ignorant no fue ejecutado.</p>
+                    {% endif %}
                 {% endif %}
             {% else %}
                 <p>No se analizó ningún teléfono.</p>

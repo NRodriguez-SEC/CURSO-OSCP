@@ -214,6 +214,18 @@ def generate_graph(reporte, filename=None):
             _nodo(net, "validez", estado, "dns" if tel.get("valido") else "brecha")
             net.add_edge(id_target, "validez")
 
+        # Cuentas asociadas al teléfono (ignorant)
+        sitios = data.get("ignorant", {}).get("sitios", [])
+        if sitios:
+            _nodo(net, "ignorant", f"ignorant ({len(sitios)})", "dns")
+            net.add_edge(id_target, "ignorant")
+            for i, s in enumerate(sitios[:15]):
+                sid = f"ign_{i}"
+                dominio = str(s.get("sitio", "?"))
+                _nodo(net, sid, dominio[:25], "perfil",
+                      title=f"Registrado en {dominio}")
+                net.add_edge("ignorant", sid)
+
     _guardar(net, filename)
     print(f"{Fore.GREEN}[*] Grafo interactivo guardado en: {filename}")
     return filename
@@ -338,4 +350,8 @@ def _añadir_hallazgos(net, rep, root_id, idx):
         if tel.get("pais"):
             nid = f"pais{p}"
             _nodo(net, nid, tel["pais"], "dns")
+            net.add_edge(root_id, nid)
+        for i, s in enumerate(data.get("ignorant", {}).get("sitios", [])[:10]):
+            nid = f"ign{p}_{i}"
+            _nodo(net, nid, str(s.get("sitio", "?"))[:22], "perfil")
             net.add_edge(root_id, nid)

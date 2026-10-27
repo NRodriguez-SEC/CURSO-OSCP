@@ -82,8 +82,9 @@ def run_investigation(target, target_type, run_active=False, run_harvester=False
 
     elif target_type == "phone":
         print(f"{Fore.GREEN}[+] Cargando módulo de ANÁLISIS DE TELÉFONO...")
-        from modules.person import phone
+        from modules.person import phone, ignorant
         reporte["data"]["telefono"] = phone.run(target)
+        reporte["data"]["ignorant"] = ignorant.run(target)
 
     reporte["fecha"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return reporte
