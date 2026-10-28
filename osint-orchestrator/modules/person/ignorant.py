@@ -67,10 +67,13 @@ def _parsear_salida(texto):
 
     for linea in limpio.split("\n"):
         linea = linea.strip()
+        # Solo [+] (cuenta encontrada). [-] no usado y [x] rate limit se ignoran.
         if linea.startswith("[+]"):
             resto = linea[3:].strip()
             sitio = resto.split()[0] if resto else ""
-            if sitio and sitio not in vistos:
+            # El "." descarta la línea de leyenda ("[+] Phone number used, ...")
+            # y deja solo dominios reales como "instagram.com".
+            if sitio and "." in sitio and sitio not in vistos:
                 vistos.add(sitio)
                 sitios.append({"sitio": sitio, "registrado": True})
 
