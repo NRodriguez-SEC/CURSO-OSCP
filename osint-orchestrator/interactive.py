@@ -187,6 +187,9 @@ def main():
     os.makedirs("output", exist_ok=True)
 
     objetivo = (args.target or Prompt.ask("[bold cyan]Objetivo inicial[/]")).strip()
+    # Quita el carácter de sustitución (�) que deja un byte de terminal inválido,
+    # y cualquier carácter de control, para no ensuciar la detección del tipo.
+    objetivo = "".join(c for c in objetivo if c.isprintable() and c != "�").strip()
     tipo = args.type or confirmar_tipo(objetivo)
 
     cola = [(objetivo, tipo, None)]   # (target, tipo, origen)
