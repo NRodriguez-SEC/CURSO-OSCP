@@ -204,6 +204,11 @@ def generate_graph(reporte, filename=None):
                 _nodo(net, "operador", f"Op. original: {tel['operador']}", "subdominio",
                       title="Operador del rango original; puede variar por portabilidad")
                 net.add_edge(id_target, "operador")
+            tw = data.get("twilio", {})
+            if tw.get("disponible") and not tw.get("error") and tw.get("operador_actual"):
+                _nodo(net, "operador_actual", f"Op. actual: {tw['operador_actual']}", "confirmado",
+                      title="Operador real (Twilio Lookup, refleja portabilidad)")
+                net.add_edge(id_target, "operador_actual")
             if tel.get("tipo_linea"):
                 _nodo(net, "tipo", f"Tipo: {tel['tipo_linea']}", "puerto")
                 net.add_edge(id_target, "tipo")
@@ -346,6 +351,12 @@ def _añadir_hallazgos(net, rep, root_id, idx):
             nid = f"op{p}"
             _nodo(net, nid, f"Op. original: {tel['operador']}", "subdominio",
                   title="Operador del rango original; puede variar por portabilidad")
+            net.add_edge(root_id, nid)
+        tw = data.get("twilio", {})
+        if tw.get("disponible") and not tw.get("error") and tw.get("operador_actual"):
+            nid = f"twop{p}"
+            _nodo(net, nid, f"Op. actual: {tw['operador_actual']}", "confirmado",
+                  title="Operador real (Twilio Lookup)")
             net.add_edge(root_id, nid)
         if tel.get("pais"):
             nid = f"pais{p}"

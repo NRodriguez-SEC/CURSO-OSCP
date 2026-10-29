@@ -257,7 +257,20 @@
                         <tr><th>Tipo de línea</th><td>{{ reporte.data.telefono.tipo_linea }}</td></tr>
                         <tr><th>Zonas horarias</th><td>{{ reporte.data.telefono.zonas_horarias|join(', ') }}</td></tr>
                     </table>
-                    <p><small>⚠️ El operador mostrado es el del <strong>rango asignado originalmente</strong>. Por la portabilidad, el operador actual puede ser distinto (p. ej. un número de Movistar portado a DIGI). Para el operador real se necesita una consulta HLR, que es de pago.</small></p>
+                    <p><small>⚠️ El operador mostrado es el del <strong>rango asignado originalmente</strong>. Por la portabilidad, el operador actual puede ser distinto (p. ej. un número de Movistar portado a DIGI).</small></p>
+
+                    {% set tw = reporte.data.twilio %}
+                    {% if tw and tw.disponible %}
+                        {% if tw.error %}
+                            <p class="error"><strong>⚠️ Twilio:</strong> {{ tw.error }}</p>
+                        {% else %}
+                            <table>
+                                <tr><th>Operador actual (Twilio)</th><td><strong>{{ tw.operador_actual }}</strong></td></tr>
+                                <tr><th>Tipo de línea (Twilio)</th><td>{{ tw.tipo_linea }}</td></tr>
+                            </table>
+                            <p><small>✅ Operador real consultado en la red (refleja la portabilidad).</small></p>
+                        {% endif %}
+                    {% endif %}
 
                     <h3>🌐 Cuentas Registradas (ignorant)</h3>
                     {% if reporte.data.ignorant %}

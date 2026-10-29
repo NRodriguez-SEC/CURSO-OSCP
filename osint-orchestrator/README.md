@@ -103,6 +103,13 @@ git clone https://github.com/laramies/theHarvester.git ~/theHarvester
 export HIBP_API_KEY="tu_api_key"
 ```
 
+**6. Credenciales de Twilio** (opcional, de pago). Activan el **operador actual** del teléfono (refleja la portabilidad, a diferencia de `phonenumbers`). Sin ellas, el análisis de teléfono funciona igual pero sin ese dato:
+
+```bash
+export TWILIO_ACCOUNT_SID="ACxxxxxxxx"
+export TWILIO_AUTH_TOKEN="xxxxxxxx"
+```
+
 ## Uso
 
 Activa siempre el entorno antes de usarla:
@@ -163,7 +170,7 @@ En los grafos de username, los perfiles se colorean según el cruce de fuentes:
 - Holehe y Maigret dependen de los servicios consultados y pueden fallar por bloqueos o cambios en ellos.
 - Un username con punto (`nombre.apellido`) tiene la misma forma que un dominio: confirma el tipo al empezar.
 - Sin `HIBP_API_KEY`, los resultados de HIBP son de ejemplo.
-- **Teléfono**: el operador es el del rango asignado originalmente, no el actual. La portabilidad puede hacer que difieran (un número de Movistar portado a DIGI sigue figurando como Movistar). El operador real requiere una consulta HLR de pago.
+- **Teléfono**: el operador de `phonenumbers` es el del rango asignado originalmente, no el actual. La portabilidad puede hacer que difieran (un número de Movistar portado a DIGI sigue figurando como Movistar). Para el operador **real/actual** se usa Twilio Lookup (opcional, de pago), que consulta la red; si no configuras Twilio, solo verás el operador original.
 
 ## Créditos
 

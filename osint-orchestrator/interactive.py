@@ -88,6 +88,9 @@ def tabla_hallazgos(reporte):
         t.add_row("País", str(tel.get("pais", "?")))
         t.add_row("Operador", str(tel.get("operador", "?")))
         t.add_row("Tipo", str(tel.get("tipo_linea", "?")))
+        tw = data.get("twilio", {})
+        if tw.get("disponible") and not tw.get("error"):
+            t.add_row("[green]Operador actual (Twilio)[/]", f"[green]{tw.get('operador_actual', '?')}[/]")
         t.add_row("ignorant (cuentas)", str(len(data.get("ignorant", {}).get("sitios", []))))
 
     console.print(t)
