@@ -4,6 +4,26 @@ import os
 import re
 from colorama import Fore
 
+# theHarvester incluye en su banner/créditos el dominio y el email de su autor
+# (Christian Martorella / edge-security.com). Los filtramos para que no salgan
+# como resultados del objetivo.
+RUIDO = {"edge-security.com"}
+
+
+def _sin_ruido_emails(emails):
+    return [e for e in emails if e.rsplit("@", 1)[-1].lower() not in RUIDO]
+
+
+def _sin_ruido_hosts(hosts):
+    limpios = []
+    for h in hosts:
+        hl = h.lower()
+        if hl in RUIDO or any(hl.endswith("." + d) for d in RUIDO):
+            continue
+        limpios.append(h)
+    return limpios
+
+
 def parse_stdout(output):
     """Extrae emails, hosts e IPs de la salida de texto si falla el JSON."""
     emails = set(re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', output))
@@ -11,8 +31,8 @@ def parse_stdout(output):
     hosts = set(re.findall(r'[\w\.-]+\.\w{2,}', output))
     ips = set(re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', output))
     return {
-        "emails": list(emails),
-        "hosts": list(hosts),
+        "emails": _sin_ruido_emails(list(emails)),
+        "hosts": _sin_ruido_hosts(list(hosts)),
         "ips": list(ips)
     }
 
@@ -76,8 +96,8 @@ def run(target, sources="crtsh,certspotter,commoncrawl", limit=500):
             with open(json_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
-            emails = sorted(set(e for e in data.get("emails", []) if isinstance(e, str)))
-            hosts = sorted(set(h for h in data.get("hosts", []) if isinstance(h, str)))
+            emails = _sin_ruido_emails(sorted(set(e for e in data.get("emails", []) if isinstance(e, str))))
+            hosts = _sin_ruido_hosts(sorted(set(h for h in data.get("hosts", []) if isinstance(h, str))))
             ips = sorted(set(data.get("ips", [])))
             
             print(f"{Fore.GREEN}    - Emails encontrados: {len(emails)}")
