@@ -5,6 +5,14 @@ import os
 import datetime
 from colorama import init, Fore
 
+# Fuerza UTF-8 con sustitución en la E/S: evita que un byte inválido en la
+# terminal (algunas configuraciones de WSL) rompa la lectura de input().
+for _s in (sys.stdin, sys.stdout):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
 init(autoreset=True)
 
 

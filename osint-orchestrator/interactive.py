@@ -8,6 +8,14 @@ import os
 import re
 import sys
 from datetime import datetime
+
+# Fuerza UTF-8 con sustitución en la E/S: evita que un byte inválido en la
+# terminal (algunas configuraciones de WSL) rompa la lectura de input().
+for _s in (sys.stdin, sys.stdout):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
