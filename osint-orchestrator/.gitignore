@@ -1,15 +1,48 @@
-# Resultados de investigaciones (datos sensibles de objetivos reales)
-output/
+# Informes OSINT: pueden contener datos personales
+reports/
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
 
 # Python
 __pycache__/
 *.py[cod]
-.venv/
-venv/
+*$py.class
+.Python
+*.egg-info/
+.eggs/
+build/
+dist/
+develop-eggs/
+downloads/
+wheels/
+pip-wheel-metadata/
 
-# Secretos
+# Configuración local y secretos
 .env
-*.key
+.env.*
+!.env.example
 
-# SO
+# Pruebas y herramientas de calidad
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Editores y sistema operativo
+.idea/
+.vscode/
 .DS_Store
+Thumbs.db
+Desktop.ini
+
+# Notas y comandos locales
+useful_commands.md
+homework.md

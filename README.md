@@ -9,16 +9,19 @@ Reúne herramientas y prácticas de reconocimiento, OSINT y seguridad web desarr
 
 ## Contenido
 
-### 🕵️ [OSINT Orchestrator](osint-orchestrator/)
+### 🕵️ [OSINTBODY — Orquestador OSINT](osint-orchestrator/)
 
-Orquestador de herramientas OSINT en Python. Centraliza varias herramientas de código abierto, unifica sus resultados y genera reportes HTML/JSON con grafos interactivos.
+Herramienta OSINT modular en Python para consultar información pública a partir de un **correo, nombre de usuario, dominio, teléfono o nombre**. Paquete instalable (`pip install -e .`, comando `osintbody`) con tres interfaces: **CLI**, **TUI** de pantalla completa y **web local** con grafo interactivo.
 
-- Objetivos: **dominios, emails, usernames y teléfonos**, con detección automática del tipo.
-- Modo rápido ([`main.py`](osint-orchestrator/main.py)) y modo interactivo con pivotes ([`interactive.py`](osint-orchestrator/interactive.py)).
-- Integra Sherlock, Maigret, Holehe, theHarvester, Nmap, HIBP y XposedOrNot, y **cruza** los perfiles de Sherlock y Maigret por nivel de confianza.
-- Grafos interactivos con nodos clicables y grafo maestro de la sesión.
+- Interfaz web (Flask) con **grafo de relaciones** (Cytoscape): arrastrar nodos, inspeccionar evidencia y exportar a PNG.
+- Correlación de identidades y **pivotes** entre fuentes; informes en **HTML y JSON** por búsqueda.
+- Módulos: brechas, dominio (DNS/WHOIS), theHarvester, teléfono, usernames (dataset WhatsMyName), **perfil de GitHub** y **Wikidata**.
+- Modo privado por defecto (solo análisis local); las fuentes externas se activan de forma explícita.
+- Con tipado estricto (mypy), linting de seguridad (ruff) y una amplia batería de **tests** (`pytest`).
 
-📖 Documentación completa en su [README](osint-orchestrator/README.md).
+> Desarrollada de forma conjunta con un compañero; integra el orquestador previo con su herramienta ([osint-footprint-orchestrator](https://github.com/EdwinRincon/osint-footprint-orchestrator)).
+
+📖 Documentación: [README](osint-orchestrator/README.md) y [manual](osint-orchestrator/docs/manual.md). Código en [`src/osint_tool/`](osint-orchestrator/src/osint_tool/).
 
 ### 🛡️ [Suite de Reconocimiento y Análisis Web](analisis-pasivo-activo/)
 
@@ -41,7 +44,7 @@ Trabajo de investigación sobre el funcionamiento de los sistemas anti-cheat a n
 ```
 CURSO-OSCP/
 ├── README.md                        # Este archivo
-├── osint-orchestrator/              # Orquestador OSINT
+├── osint-orchestrator/              # OSINTBODY: orquestador OSINT (web, TUI y CLI)
 ├── analisis-pasivo-activo/          # Suite de reconocimiento y análisis web
 └── TAREA 1- ANTICHEAT-CROWDSTRIKE    # Investigación sobre anti-cheat
 ```
@@ -50,7 +53,7 @@ CURSO-OSCP/
 
 ## Tecnologías
 
-Python 3, con herramientas OSINT y de pentesting de código abierto (Sherlock, Maigret, Holehe, theHarvester, Nmap) y visualización con pyvis.
+Python 3, con herramientas OSINT y de pentesting de código abierto (theHarvester, WhatsMyName, Nmap) y visualización de grafos (Cytoscape). Stack de OSINTBODY: Flask, Typer, Textual, Rich, phonenumbers, dnspython.
 
 ## Autor
 
