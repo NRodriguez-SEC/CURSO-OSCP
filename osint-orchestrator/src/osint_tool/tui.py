@@ -291,14 +291,13 @@ class RunScreen(FlowScreen):
                 on_progress=notify_progress,
                 on_module_progress=notify_module_progress,
             )
-            directory, paths = write_reports(
-                report, self._output_dir, self._output_format
-            )
         except OSError as exc:
-            self.app.call_from_thread(self._show_error, f"Error al escribir el informe: {exc}")
+            self.app.call_from_thread(self._show_error, f"Error en la investigación: {exc}")
             return
+        # El nombre del informe se pide antes de escribir, en una pantalla aparte.
         self.app.call_from_thread(
-            self.app.switch_screen, ResultScreen(report, directory, paths)
+            self.app.switch_screen,
+            NameScreen(report, self._output_dir, self._output_format),
         )
 
     # Actualizar una fila por módulo mantiene el avance legible sin exponer datos sensibles.
@@ -328,6 +327,58 @@ class RunScreen(FlowScreen):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "menu":
             self.action_menu()
+
+
+class NameScreen(FlowScreen):
+    """Pide un nombre para el informe antes de guardarlo en disco."""
+
+    # Conservar el informe y su destino permite escribirlo con el nombre elegido.
+    def __init__(
+        self,
+        report: Report,
+        output_dir: Path,
+        output_format: OutputFormat,
+    ) -> None:
+        super().__init__()
+        self._report = report
+        self._output_dir = output_dir
+        self._output_format = output_format
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Label("¿Cómo quieres llamar al informe? (vacío = fecha y hora)")
+        yield Input(placeholder="p. ej. ana-github", id="report-name")
+        with Horizontal():
+            yield Button("Guardar", id="save", variant="success")
+            yield Button("Cancelar", id="cancel", variant="error")
+        yield Footer()
+
+    # Enfocar la entrada al abrir evita un clic extra antes de escribir.
+    def on_mount(self) -> None:
+        self.query_one("#report-name", Input).focus()
+
+    # Pulsar Enter en la entrada equivale a Guardar.
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "report-name":
+            self._save()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "cancel":
+            self.action_menu()
+        elif event.button.id == "save":
+            self._save()
+
+    # Escribir aquí mantiene la elección del nombre junto a la acción de guardar.
+    def _save(self) -> None:
+        name = self.query_one("#report-name", Input).value.strip() or None
+        try:
+            directory, paths = write_reports(
+                self._report, self._output_dir, self._output_format, name
+            )
+        except OSError as exc:
+            self.notify(f"Error al escribir el informe: {exc}", severity="error")
+            return
+        self.app.switch_screen(ResultScreen(self._report, directory, paths))
 
 
 class ResultScreen(FlowScreen):

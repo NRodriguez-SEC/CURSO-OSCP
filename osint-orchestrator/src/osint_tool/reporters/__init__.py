@@ -28,9 +28,14 @@ def reporters_for(fmt: str) -> list[Reporter]:
 
 
 # Centralizar escritura asegura que todos los formatos compartan carpeta y política de nombres.
-def write_reports(report: Report, output_dir: Path, fmt: str = "all") -> tuple[Path, list[Path]]:
-    """Crea la carpeta del informe, escribe los ficheros y devuelve (carpeta, rutas)."""
+def write_reports(
+    report: Report, output_dir: Path, fmt: str = "all", name: str | None = None
+) -> tuple[Path, list[Path]]:
+    """Crea la carpeta del informe, escribe los ficheros y devuelve (carpeta, rutas).
+
+    `name` (opcional) da nombre a la carpeta; sin él se usa la fecha y hora.
+    """
     reporters = reporters_for(fmt)  # valida el formato antes de crear nada
-    directory = create_report_dir(output_dir, report)
+    directory = create_report_dir(output_dir, report, name)
     paths = [path for reporter in reporters for path in reporter.write(report, directory)]
     return directory, paths
