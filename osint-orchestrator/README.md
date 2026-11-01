@@ -55,11 +55,16 @@ blanco se usa la fecha y hora). La carpeta de salida es `output/`.
 
 ### Fuentes externas opcionales (opt-in)
 
-Se activan marcándolas en la selección de módulos (terminal) o en «fuentes externas» (web):
+Se activan marcándolas en la selección de módulos (terminal) o en «fuentes externas» (web). Cada
+fuente se marca como **pasiva** (no contacta con el objetivo) o **activa · intrusiva** (le envía
+tráfico directo). Las activas, úsalas **solo sobre objetivos propios o autorizados**:
 
-- **Escaneo activo (Nmap)**: puertos abiertos de un dominio. Es **intrusivo**: úsalo solo sobre
-  objetivos propios o autorizados. Requiere tener `nmap` instalado; si no, se omite.
-- **theHarvester**: subdominios y emails de un dominio. Requiere `theHarvester` instalado.
+- **Escaneo activo de puertos (Nmap)** — *activa*: puertos abiertos de un dominio. Requiere tener
+  `nmap` instalado; si no, se omite.
+- **Rutas/directorios comunes** — *activa*: prueba por HTTP rutas típicas (admin, login, `.git`,
+  `.env`…). No requiere instalar nada (solo peticiones HTTP).
+- **theHarvester** — *pasiva (externa)*: subdominios y emails de un dominio. Requiere
+  `theHarvester` instalado.
 
 ```powershell
 osintbody --help
@@ -103,7 +108,9 @@ Las relaciones identifican su evidencia y son asociaciones observadas, no prueba
 común.
 
 En el grafo puedes arrastrar y seleccionar nodos/aristas para consultar la evidencia, reajustar
-la distribución o descargar una imagen PNG. Los nodos representan identificadores observados;
+la distribución o descargar una imagen PNG. Al seleccionar un nodo cuyo valor es una URL (por
+ejemplo, un perfil), el panel de detalles muestra un **enlace clicable** para abrir esa página.
+Los nodos representan identificadores observados;
 no se fusionan cuentas de distintos servicios solo por compartir un username.
 
 La fuente **Perfil de GitHub por username** consulta una sola vez la API pública (sin clave) y

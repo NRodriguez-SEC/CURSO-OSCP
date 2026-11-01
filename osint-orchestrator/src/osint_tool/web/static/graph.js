@@ -132,6 +132,9 @@
     runLayout();
   }
 
+  const isHttpUrl = (value) =>
+    typeof value === "string" && /^https?:\/\//i.test(value);
+
   graph.on("tap", "node", (event) => {
     const node = event.target.data();
     if (node.is_group) {
@@ -141,7 +144,19 @@
       expandGroup(node.id);
       return;
     }
-    details.textContent = `${node.kind}: ${node.value}${node.is_target ? " (dato de entrada)" : ""}`;
+    const suffix = node.is_target ? " (dato de entrada)" : "";
+    if (isHttpUrl(node.value)) {
+      // Se construye con el DOM (no innerHTML) para que el valor no se interprete como HTML.
+      details.replaceChildren(document.createTextNode(`${node.kind}: `));
+      const link = document.createElement("a");
+      link.href = node.value;
+      link.textContent = node.value;
+      link.target = "_blank";
+      link.rel = "noreferrer noopener";
+      details.append(link, document.createTextNode(suffix));
+    } else {
+      details.textContent = `${node.kind}: ${node.value}${suffix}`;
+    }
   });
 
   graph.on("tap", "edge", (event) => {

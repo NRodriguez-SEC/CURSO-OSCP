@@ -71,6 +71,8 @@
                         gap: .75rem; font-weight: 700; }
     .analysis-state { color: #17695e; font-size: .82rem; font-weight: 650; }
     .analysis-item[data-active="false"] .analysis-state { color: #5e6d69; }
+    .analysis-tool-kind { font-size: .78rem; font-weight: 650; color: #b23b2e; margin-left: .4rem; }
+    .analysis-item[data-active-tool="false"] .analysis-tool-kind { color: #5e6d69; font-weight: 500; }
     .analysis-item p { margin: .3rem 0 0; color: #5e6d69; font-size: .85rem; line-height: 1.45; }
     .analysis-requirement { margin-top: .45rem !important; font-size: .82rem !important; }
     .analysis-toggle { display: flex; align-items: center; gap: .5rem; margin-top: .6rem;
@@ -168,13 +170,15 @@
               No hay fuentes externas compatibles todavía; completa un dato para ver las opciones.
             </p>
             <ul class="analysis-list" id="analysis-list">
-              {% for name, label, description, accepts, optional, requires_network in module_catalog %}
+              {% for name, label, description, accepts, optional, requires_network, active in module_catalog %}
               {% if optional or requires_network %}
               <li class="analysis-item" data-accepts="{{ accepts | join(' ') }}"
                   data-optional="{{ 'true' if optional else 'false' }}"
-                  data-network="{{ 'true' if requires_network else 'false' }}">
+                  data-network="{{ 'true' if requires_network else 'false' }}"
+                  data-active-tool="{{ 'true' if active else 'false' }}">
                 <div class="analysis-heading">
                   <span>{{ label }}</span>
+                  <span class="analysis-tool-kind">{% if active %}🛑 activa · intrusiva{% else %}pasiva{% endif %}</span>
                   <span class="analysis-state" aria-live="polite"></span>
                 </div>
                 <p>{{ description }}</p>

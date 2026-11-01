@@ -95,8 +95,8 @@ def web_network_modules() -> list[tuple[str, str]]:
 
 
 # El catálogo permite que la interfaz presente capacidades declaradas junto al módulo.
-def web_module_catalog() -> list[tuple[str, str, str, frozenset[str], bool, bool]]:
-    """Presentación de fuentes web y datos de entrada que las habilitan."""
+def web_module_catalog() -> list[tuple[str, str, str, frozenset[str], bool, bool, bool]]:
+    """Presentación de fuentes web, datos de entrada e indicador pasiva/activa."""
     return [
         (
             name,
@@ -105,6 +105,7 @@ def web_module_catalog() -> list[tuple[str, str, str, frozenset[str], bool, bool
             module.accepts,
             getattr(module, "web_opt_in", False),
             getattr(module, "requires_network", False),
+            getattr(module, "active", False),  # True = fuente activa (intrusiva)
         )
         for name, module in _REGISTRY.items()
     ]

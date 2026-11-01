@@ -55,9 +55,10 @@ class DomainActiveModule:
 
     name = "domain_active"
     requires_network = True
+    active = True  # genera tráfico directo contra el objetivo (intrusivo)
     accepts = frozenset({"domain"})
     web_opt_in = True
-    web_label = "Escaneo activo (Nmap)"
+    web_label = "Escaneo activo de puertos (Nmap)"
     web_description = (
         "Escaneo de puertos con Nmap. INTRUSIVO: úsalo solo sobre objetivos propios "
         "o autorizados. Requiere Nmap instalado; si no, se omite."

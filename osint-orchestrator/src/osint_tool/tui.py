@@ -161,7 +161,13 @@ class TargetScreen(FlowScreen):
 
 def _module_selection(module: Module, provided: frozenset[str]) -> Selection[str]:
     network = getattr(module, "requires_network", False)
-    source_kind = "externa; opt-in" if network else "local"
+    active = getattr(module, "active", False)
+    if active:
+        source_kind = "ACTIVA · intrusiva"
+    elif network:
+        source_kind = "pasiva · externa; opt-in"
+    else:
+        source_kind = "pasiva · local"
     accepted_inputs = ", ".join(sorted(module.accepts & provided))
     label = getattr(module, "web_label", module.name)
     return Selection(
