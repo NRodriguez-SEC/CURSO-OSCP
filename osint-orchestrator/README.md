@@ -57,8 +57,6 @@ blanco se usa la fecha y hora). La carpeta de salida es `output/`.
 
 Se activan marcándolas en la selección de módulos (terminal) o en «fuentes externas» (web):
 
-- **Have I Been Pwned**: brechas de un email. Requiere clave de API (de pago); defínela en
-  `OSINT_HIBP_API_KEY`. Sin clave, la fuente se omite.
 - **Escaneo activo (Nmap)**: puertos abiertos de un dominio. Es **intrusivo**: úsalo solo sobre
   objetivos propios o autorizados. Requiere tener `nmap` instalado; si no, se omite.
 - **theHarvester**: subdominios y emails de un dominio. Requiere `theHarvester` instalado.

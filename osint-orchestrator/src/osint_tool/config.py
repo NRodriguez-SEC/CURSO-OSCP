@@ -50,7 +50,6 @@ class Settings:
     breaches_api_url: str = DEFAULT_BREACHES_API_URL  # nombres de brechas; plantilla con {email}
     breaches_analytics_url: str = DEFAULT_BREACHES_ANALYTICS_URL  # detalle; plantilla con {email}
     breaches_reference_url: str = DEFAULT_BREACHES_REFERENCE_URL  # documentación de la API
-    hibp_api_key: str = ""  # clave de Have I Been Pwned (de pago); vacía = módulo omitido
 
 
 # Un conversor común evita que cada ajuste interprete números de forma distinta.
@@ -140,7 +139,7 @@ def load_settings() -> Settings:
         OSINT_HTTP_TIMEOUT, OSINT_HTTP_RETRIES, OSINT_CLI_TIMEOUT, OSINT_OUTPUT_DIR,
         OSINT_WMN_FILE, OSINT_WMN_UPDATE_URL,
         OSINT_HARVESTER_SOURCES, OSINT_BREACHES_API_URL, OSINT_BREACHES_ANALYTICS_URL,
-        OSINT_BREACHES_REFERENCE_URL, OSINT_HIBP_API_KEY
+        OSINT_BREACHES_REFERENCE_URL
     """
     defaults = Settings()
     return Settings(
@@ -162,5 +161,4 @@ def load_settings() -> Settings:
         breaches_reference_url=_read_https_url(
             "OSINT_BREACHES_REFERENCE_URL", defaults.breaches_reference_url
         ),
-        hibp_api_key=os.environ.get("OSINT_HIBP_API_KEY", "").strip(),
     )
