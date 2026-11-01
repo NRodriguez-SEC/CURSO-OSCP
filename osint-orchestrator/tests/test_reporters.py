@@ -160,14 +160,20 @@ def test_html_contiene_las_secciones_principales(tmp_path: Path) -> None:
     assert 'class="badge skipped"' in html
 
 
-def test_html_no_incluye_el_grafo_interactivo(tmp_path: Path) -> None:
+def test_html_enlaza_el_grafo_sin_incrustarlo(tmp_path: Path) -> None:
     (tmp_path / "graph.html").write_text("<p>graph</p>", encoding="utf-8")
     html = _render(tmp_path, _report())
 
-    assert "Grafo interactivo" not in html
-    assert "report-graph" not in html
+    assert 'href="graph.html"' in html  # el informe enlaza el grafo
+    assert "report-graph" not in html  # pero no lo incrusta
     assert "fullscreen-toggle" not in html
     assert "<p>graph</p>" not in html
+
+
+def test_html_sin_grafo_no_pone_enlace(tmp_path: Path) -> None:
+    html = _render(tmp_path, _report())  # sin graph.html en la carpeta
+
+    assert 'href="graph.html"' not in html
 
 
 def test_html_pliega_tablas_grandes_sin_omitir_datos(tmp_path: Path) -> None:

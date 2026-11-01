@@ -27,11 +27,14 @@ class HtmlReporter:
 
     # Renderizar desde una plantilla compartida evita ensamblar HTML con datos sin escapar.
     def write(self, report: Report, directory: Path) -> list[Path]:
+        # El grafo se escribe antes que el informe; si existe, se enlaza (no se incrusta).
+        graph_path = directory / "graph.html"
         html = _env.get_template("report.html").render(
             report=report,
             target=report.target.to_dict(),
             notice=LEGAL_NOTICE,
             created=report.created_at.isoformat(timespec="seconds"),
+            graph_file=graph_path.name if graph_path.exists() else None,
         )
         path = directory / "report.html"
         path.write_text(html, encoding="utf-8")

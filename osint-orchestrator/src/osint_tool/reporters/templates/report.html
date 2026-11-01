@@ -33,6 +33,9 @@
   <h1>Informe OSINT</h1>
   <p class="notice">{{ notice }}</p>
   <p class="muted">Generado: {{ created }}</p>
+  {% if graph_file %}
+  <p><a href="{{ graph_file }}" rel="noreferrer noopener">🕸️ Abrir el grafo interactivo</a></p>
+  {% endif %}
 
   {% if report.notes %}
   <section class="notes">
