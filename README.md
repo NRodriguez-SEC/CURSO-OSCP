@@ -19,7 +19,7 @@ Herramienta OSINT modular en Python para consultar información pública a parti
 - Modo privado por defecto (solo análisis local); las fuentes externas se activan de forma explícita.
 - Con tipado estricto (mypy), linting de seguridad (ruff) y una amplia batería de **tests** (`pytest`).
 
-> Desarrollada de forma conjunta con un compañero; integra el orquestador previo con su herramienta ([osint-footprint-orchestrator](https://github.com/EdwinRincon/osint-footprint-orchestrator)).
+> Proyecto desarrollado en equipo (tres compañeros). Integra el trabajo del grupo partiendo de la herramienta base del equipo ([osint-footprint-orchestrator](https://github.com/EdwinRincon/osint-footprint-orchestrator)).
 
 📖 Documentación: [README](osint-orchestrator/README.md) y [manual](osint-orchestrator/docs/manual.md). Código en [`src/osint_tool/`](osint-orchestrator/src/osint_tool/).
 
