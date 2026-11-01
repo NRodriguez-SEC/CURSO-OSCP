@@ -4,6 +4,15 @@ Herramienta educativa para consultar información pública a partir de un correo
 
 ## Instalación
 
+### Opción rápida (Linux/WSL): script
+
+```bash
+./install.sh                 # monta venv, instala el paquete y theHarvester
+./install.sh --no-harvester  # sin theHarvester
+```
+
+### Opción manual
+
 ```bash
 python -m venv .venv
 
@@ -72,11 +81,13 @@ de forma inequívoca.
 ## Informes
 
 Al generar un informe, cada búsqueda guarda los resultados en una carpeta nueva dentro de
-`reports/`: `report.html`, `report.json` y los recursos del grafo interactivo, incluido
+`output/`: `report.html`, `report.json` y los recursos del grafo interactivo, incluido
 `graph.html`. Desde la web puedes abrir o descargar el informe HTML, descargar los datos JSON
-y abrir el grafo interactivo por separado; el informe HTML no incorpora el grafo. Las tablas
-extensas del informe se pueden desplegar bajo demanda. La visualización se distribuye localmente
-y funciona sin depender de una CDN.
+y abrir el grafo interactivo por separado; el informe HTML no incorpora el grafo. En el informe
+HTML, las cuentas encontradas son **enlaces** a su perfil y los correos son enlaces `mailto:`.
+Las tablas extensas del informe se pueden desplegar bajo demanda. La visualización se distribuye
+localmente y funciona sin depender de una CDN.
+(La carpeta de salida es configurable con la variable `OSINT_OUTPUT_DIR`.)
 Las relaciones identifican su evidencia y son asociaciones observadas, no pruebas de identidad
 común.
 

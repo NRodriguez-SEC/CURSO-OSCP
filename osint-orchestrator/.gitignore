@@ -1,4 +1,5 @@
 # Informes OSINT: pueden contener datos personales
+output/
 reports/
 
 # Entornos virtuales

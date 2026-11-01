@@ -42,7 +42,7 @@ class Settings:
     http_timeout: float = 10.0  # segundos por petición HTTP
     http_retries: int = 2  # reintentos limitados
     cli_timeout: int = 60  # segundos para herramientas externas
-    output_dir: Path = Path("reports")
+    output_dir: Path = Path("output")
     user_agent: str = DEFAULT_USER_AGENT
     wmn_file: Path = DEFAULT_WMN_FILE  # dataset WhatsMyName con los sitios a comprobar
     wmn_update_url: str = DEFAULT_WMN_UPDATE_URL  # origen oficial del dataset

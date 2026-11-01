@@ -101,7 +101,15 @@
     {% for f in r.findings %}
     <tr>
       <td>{{ f.type }}</td>
-      <td>{{ f.value }}</td>
+      <td>
+        {% if f.value.startswith("https://") or f.value.startswith("http://") %}
+        <a href="{{ f.value }}" rel="noreferrer noopener">{{ f.value }}</a>
+        {% elif "@" in f.value and " " not in f.value and f.value.count("@") == 1 %}
+        <a href="mailto:{{ f.value }}">{{ f.value }}</a>
+        {% else %}
+        {{ f.value }}
+        {% endif %}
+      </td>
       <td>{{ f.detail or "" }}</td>
       <td>{{ f.source }}</td>
       <td>
