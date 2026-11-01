@@ -19,7 +19,7 @@ Herramienta OSINT modular en Python para consultar información pública a parti
 - Modo privado por defecto (solo análisis local); las fuentes externas se activan de forma explícita.
 - Con tipado estricto (mypy), linting de seguridad (ruff) y una amplia batería de **tests** (`pytest`).
 
-📖 Documentación: [README](osint-orchestrator/README.md) y [manual](osint-orchestrator/docs/manual.md). Código en [`src/osint_tool/`](osint-orchestrator/src/osint_tool/).
+📖 Documentación: [README](osint-orchestrator/README.md). Código en [`src/osint_tool/`](osint-orchestrator/src/osint_tool/).
 
 ### 🛡️ [Suite de Reconocimiento y Análisis Web](analisis-pasivo-activo/)
 
