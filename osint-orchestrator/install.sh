@@ -48,15 +48,15 @@ else
     error "Falló 'pip install -e .[dev]'. Revisa la salida de pip."
 fi
 
-# 3) theHarvester (opcional) para el módulo de dominios
+# 3) theHarvester (opcional). En Kali/Debian es un paquete apt que deja el
+#    comando 'theHarvester' en el PATH. NO se instala con pipx (no expone app).
 if [ "$INSTALAR_HARVESTER" -eq 1 ]; then
-    info "Instalando theHarvester con pipx (lo usa el módulo de dominios)..."
-    if command -v pipx >/dev/null 2>&1; then
-        pipx install theHarvester 2>/dev/null && ok "theHarvester instalado." \
-            || aviso "theHarvester ya instalado o falló (el módulo se omite si no está)."
-        pipx ensurepath >/dev/null 2>&1
+    info "Instalando theHarvester (paquete del sistema)..."
+    if command -v apt >/dev/null 2>&1; then
+        sudo apt install -y theharvester && ok "theHarvester instalado." \
+            || aviso "No se pudo instalar 'theharvester' por apt. Instálalo según su wiki (uv)."
     else
-        aviso "pipx no disponible. Instala theHarvester a mano: pipx install theHarvester"
+        aviso "Sin apt. Instala theHarvester según github.com/laramies/theHarvester (uv)."
     fi
 else
     aviso "theHarvester omitido (--no-harvester). El módulo de dominios lo saltará."
