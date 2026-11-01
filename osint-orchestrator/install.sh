@@ -62,6 +62,16 @@ else
     aviso "theHarvester omitido (--no-harvester). El módulo de dominios lo saltará."
 fi
 
+# 4) Holehe e ignorant (opcionales): cuentas por email y por teléfono
+info "Instalando Holehe e ignorant con pipx (fuentes opcionales)..."
+if command -v pipx >/dev/null 2>&1; then
+    pipx install holehe   2>/dev/null && ok "Holehe instalado."   || aviso "Holehe ya instalado o falló (se omite si no está)."
+    pipx install ignorant 2>/dev/null && ok "ignorant instalado." || aviso "ignorant ya instalado o falló (se omite si no está)."
+    pipx ensurepath >/dev/null 2>&1
+else
+    aviso "pipx no disponible. Instala a mano: pipx install holehe ignorant"
+fi
+
 echo
 echo "============================================="
 ok "Instalación terminada."

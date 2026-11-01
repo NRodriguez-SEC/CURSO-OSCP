@@ -65,6 +65,13 @@ tráfico directo). Las activas, úsalas **solo sobre objetivos propios o autoriz
   `.env`…). No requiere instalar nada (solo peticiones HTTP).
 - **theHarvester** — *pasiva (externa)*: subdominios y emails de un dominio. Requiere
   `theHarvester` instalado.
+- **Holehe** — *pasiva (externa)*: en qué sitios está registrado un email (~120 webs). Requiere
+  `holehe` instalado.
+- **ignorant** — *pasiva (externa)*: si un teléfono tiene cuenta en Instagram, Amazon o Snapchat.
+  Requiere `ignorant` instalado.
+
+Instala las herramientas externas con `./install.sh` o a mano:
+`pipx install theHarvester holehe ignorant`.
 
 ```powershell
 osintbody --help
