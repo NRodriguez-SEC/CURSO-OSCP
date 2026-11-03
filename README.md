@@ -55,4 +55,4 @@ Python 3, con herramientas OSINT y de pentesting de código abierto (theHarveste
 
 ## Autor
 
-**Nacho Rodríguez** ([@NRodriguez-SEC](https://github.com/NRodriguez-SEC)) — Curso de Hacking Ético, 2025-2026.
+**Nacho Rodríguez, Miguel Angel Montoro y Edwin Rincon ** ([@NRodriguez-SEC](https://github.com/NRodriguez-SEC)) — Curso de Hacking Ético, 2025-2026.
