@@ -2,6 +2,8 @@
 
 Herramienta educativa para consultar información pública a partir de un correo, nombre de usuario, dominio, teléfono o nombre.
 
+> 📘 **Documentación de uso con capturas y vídeo:** [`docs/documentacion.md`](docs/documentacion.md)
+
 ## Instalación
 
 ### Opción rápida (Linux/WSL): script
